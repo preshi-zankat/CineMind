@@ -79,7 +79,7 @@ export default function Home() {
       className="min-h-screen transition-all duration-300"
       style={{ background: bg, color }}
     >
-      <Navbar />
+     
 
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-8 pt-18 text-center">
@@ -203,7 +203,7 @@ export default function Home() {
       {/* Trending movies grid - animated, clickable cards */}
       <TrendingMovies onSelect={(movie) => navigate(`/movie/${movie.id}`)} />
 
-      <Footer />
+      
     </div>
   );
 }

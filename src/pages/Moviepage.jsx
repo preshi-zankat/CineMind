@@ -70,9 +70,9 @@ export default function MoviePage() {
 
   return (
     <div className="min-h-screen transition-all duration-300" style={{ background: bg, color }}>
-      <Navbar />
+      
       <MovieDetail movie={movie} onBack={() => navigate(-1)} />
-      <Footer />
+     
     </div>
   );
 }
