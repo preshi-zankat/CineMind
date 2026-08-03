@@ -6,8 +6,9 @@ import Navbar from "../components/Navbar";
 import TrendingMovies from "../components/TrendingMovies";
 import Footer from "../components/Footer";
 import { searchMovies, getImageUrl } from "../lib/tmdb";
+import { account } from "../appwrite/config";
 
-export default function Home() {
+export default function Home () {
   const navigate = useNavigate();
   const { darkMode, bg, color } = useTheme();
 
@@ -15,6 +16,8 @@ export default function Home() {
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const searchBoxRef = useRef(null);
+
+ 
 
   // Typing rukne ke 400ms baad hi search chalega (debounce), taaki har keystroke pe API call na ho
   useEffect(() => {

@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import MovieDetail from "../components/MovieDetail";
 import { getMovieDetails } from "../lib/tmdb";
+import toast from "react-hot-toast";
 
 export default function MoviePage() {
   const { id } = useParams();
@@ -25,6 +26,7 @@ export default function MoviePage() {
         if (!cancelled) setMovie(data);
       } catch (err) {
         console.error("Failed to load movie:", err);
+        toast.error("Failed to load movie details.");
         if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
@@ -55,7 +57,11 @@ export default function MoviePage() {
         style={{ background: bg, color }}
       >
         <p style={{ fontFamily: "Inter" }}>
-          Movie load nahi ho payi. Kuch galat ho gaya.
+          {error
+            ? "Failed to load movie details. Please try again later."
+            : "Movie not found."
+            
+            }
         </p>
         <button
           onClick={() => navigate("/")}

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import { useTheme } from "./context/ThemeContext";
+
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -7,9 +8,10 @@ import MoviePage from "./pages/MoviePage";
 import ComingSoon from "./pages/ComingSoon";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
+import MyList from "./pages/MyList";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
 
-// Navbar/Footer yaha se global mil rahe hai, isliye ye ThemeProvider ke andar
-// hona chahiye taaki useTheme() kaam kare
 function AppLayout() {
   const { bg, color } = useTheme();
 
@@ -26,9 +28,30 @@ function AppLayout() {
           <Route path="/movie/:id" element={<MoviePage />} />
           <Route path="/movies" element={<ComingSoon title="Movies" />} />
           <Route path="/tv" element={<ComingSoon title="TV Shows" />} />
-          <Route path="/my-list" element={<ComingSoon title="My List" />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
+          <Route
+            path="/my-list"
+            element={
+              <ProtectedRoute>
+                <MyList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <PublicRoute>
+                <Signup />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
         </Routes>
       </main>
 
@@ -39,10 +62,8 @@ function AppLayout() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <AppLayout />
-      </BrowserRouter>
-    </ThemeProvider>
+    <BrowserRouter>
+      <AppLayout />
+    </BrowserRouter>
   );
 }

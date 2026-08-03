@@ -2,6 +2,11 @@ import { Moon, Sun, Film, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { logout } from "../appwrite/auth";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
 
 export default function Navbar() {
   const { darkMode, toggleDarkMode, color } = useTheme();
@@ -18,6 +23,21 @@ export default function Navbar() {
     color: isActive ? "#7C3AED" : color,
     fontWeight: isActive ? 700 : 500,
   });
+
+  const { checkUser } = useAuth();
+const navigate = useNavigate();
+
+const handleLogout = async () => {
+  try {
+    await logout();
+    await checkUser();
+    toast.success("Logged out successfully.");
+    navigate("/login");
+  } catch (error) {
+    console.log(error);
+    toast.error("Failed to logout.");
+  }
+};
 
   return (
     <nav
@@ -62,6 +82,14 @@ export default function Navbar() {
             style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
           >
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-full transition hover:scale-110"
+            style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
+          >
+            <span style={{ fontFamily: "Inter, sans-serif" }}>Logout</span>
           </button>
 
           {/* Mobile menu toggle */}

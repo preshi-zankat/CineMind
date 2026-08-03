@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Film, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { login } from "../appwrite/auth";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function Login() {
     } catch (err) {
       console.error(err);
       setError(err.message || "Login fail ho gaya, dobara try kar.");
+      toast.error(err.message || "Login fail ho gaya, dobara try kar.");
     } finally {
       setLoading(false);
     }

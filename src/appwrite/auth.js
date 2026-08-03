@@ -18,8 +18,30 @@ export const signup = async ({ name, email, password }) => {
 
 export const login = async ({ email, password }) => {
   try {
-    const response = await account.createEmailSession(email, password);
-    return response;
+    const session = await account.createEmailPasswordSession(
+      email,
+      password
+    );
+
+    return session;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getCurrentUser = async () => {
+  try {
+    return await account.get();
+
+     
+  } catch (error) {
+    return null;
+  }
+};
+
+export const logout = async () => {
+  try {
+    await account.deleteSession("current");
   } catch (error) {
     throw error;
   }

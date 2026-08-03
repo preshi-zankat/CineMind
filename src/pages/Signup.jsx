@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Film, Eye, EyeOff, User, Mail, Lock } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { signup } from "../appwrite/auth";
+import toast from "react-hot-toast";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export default function Signup() {
     } catch (err) {
       console.error(err);
       setError(err.message || "Kuch galat ho gaya, dobara try kar.");
+      toast.error(err.message || "Kuch galat ho gaya, dobara try kar.");
     } finally {
       setLoading(false);
     }
