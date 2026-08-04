@@ -182,7 +182,8 @@ export default function Home () {
         {/* Buttons */}
         <div className="mt-10 flex justify-center gap-5">
           <button
-            className="px-8 py-3 rounded-full font-semibold transition hover:scale-105"
+            className="px-8 py-3 rounded-full font-semibold transition hover:scale-105 pointer-coarse:scale-105"
+            onClick={() => navigate("/movies")}
             style={{
               background: "#7C3AED",
               color: "white",
@@ -192,7 +193,8 @@ export default function Home () {
           </button>
 
           <button
-            className="px-8 py-3 rounded-full font-semibold transition hover:scale-105"
+            className="px-8 py-3 rounded-full font-semibold transition hover:scale-105 cursor-alias pointer-coarse:scale-105"
+            onClick={() => navigate("/trending")}
             style={{
               background: "#F59E0B",
               color: "#111827",

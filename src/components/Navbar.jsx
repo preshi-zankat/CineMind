@@ -1,15 +1,15 @@
-import { Moon, Sun, Film, Menu, X } from "lucide-react";
+import { Moon, Sun, Film, Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { logout } from "../appwrite/auth";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { logout } from "../appwrite/auth";
 import toast from "react-hot-toast";
-
 
 export default function Navbar() {
   const { darkMode, toggleDarkMode, color } = useTheme();
+  const { user, checkUser } = useAuth();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const links = [
@@ -24,20 +24,17 @@ export default function Navbar() {
     fontWeight: isActive ? 700 : 500,
   });
 
-  const { checkUser } = useAuth();
-const navigate = useNavigate();
-
-const handleLogout = async () => {
-  try {
-    await logout();
-    await checkUser();
-    toast.success("Logged out successfully.");
-    navigate("/login");
-  } catch (error) {
-    console.log(error);
-    toast.error("Failed to logout.");
-  }
-};
+  const handleLogout = async () => {
+    try {
+      await logout();
+      await checkUser();
+      toast.success("Logged out successfully.");
+      navigate("/login");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to logout.");
+    }
+  };
 
   return (
     <nav
@@ -84,13 +81,35 @@ const handleLogout = async () => {
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-full transition hover:scale-110"
-            style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
-          >
-            <span style={{ fontFamily: "Inter, sans-serif" }}>Logout</span>
-          </button>
+          {user ? (
+            // Logged in -> sirf icon wala logout button
+            <button
+              onClick={handleLogout}
+              title="Logout"
+              className="p-2 rounded-full transition hover:scale-110"
+              style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
+            >
+              <LogOut size={18} />
+            </button>
+          ) : (
+            // Logged out -> Login + Signup buttons
+            <div className="hidden sm:flex items-center gap-2">
+              <NavLink
+                to="/login"
+                className="px-4 py-2 rounded-full text-sm font-semibold transition hover:opacity-70"
+                style={{ color, fontFamily: "Inter, sans-serif" }}
+              >
+                Log In
+              </NavLink>
+              <NavLink
+                to="/signup"
+                className="px-4 py-2 rounded-full text-sm font-semibold transition hover:scale-105"
+                style={{ background: "#7C3AED", color: "white", fontFamily: "Inter, sans-serif" }}
+              >
+                Sign Up
+              </NavLink>
+            </div>
+          )}
 
           {/* Mobile menu toggle */}
           <button
@@ -119,6 +138,27 @@ const handleLogout = async () => {
               {link.label}
             </NavLink>
           ))}
+
+          {!user && (
+            <div className="flex items-center gap-3 pt-2">
+              <NavLink
+                to="/login"
+                onClick={() => setMobileOpen(false)}
+                className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold"
+                style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
+              >
+                Log In
+              </NavLink>
+              <NavLink
+                to="/signup"
+                onClick={() => setMobileOpen(false)}
+                className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold"
+                style={{ background: "#7C3AED", color: "white" }}
+              >
+                Sign Up
+              </NavLink>
+            </div>
+          )}
         </div>
       )}
     </nav>

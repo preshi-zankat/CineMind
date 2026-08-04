@@ -2,6 +2,7 @@ import { Star, Clock, Calendar, Play, ArrowLeft, Heart } from "lucide-react";
 import { getImageUrl } from "../lib/tmdb";
 import { useTheme } from "../context/ThemeContext";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { useAuth } from "../context/AuthContext";
@@ -9,6 +10,7 @@ import { addFavorite, removeFavorite, isFavorite } from "../appwrite/favorites";
 
 export default function MovieDetail({ movie, onBack }) {
   const { darkMode } = useTheme();
+  const navigate = useNavigate();
 
   if (!movie) return null;
 
@@ -55,6 +57,33 @@ export default function MovieDetail({ movie, onBack }) {
   const runtimeHrs = Math.floor((movie.runtime || 0) / 60);
   const runtimeMins = (movie.runtime || 0) % 60;
 
+  // Director + Producer(s) crew se nikaal rahe hai (already credits fetch ho raha hai)
+  const crew = movie.credits?.crew || [];
+  const director = crew.find((c) => c.job === "Director");
+  const producers = crew.filter((c) => c.job === "Producer").slice(0, 3);
+  const writer = crew.find((c) => c.job === "Screenplay" || c.job === "Writer");
+
+  // OTT / streaming availability. TMDB region-wise data deta hai,
+  // isliye India try karo, warna US, warna jo bhi pehla region mile
+  const providersByRegion = movie["watch/providers"]?.results || {};
+  const regionData =
+    providersByRegion.IN || providersByRegion.US || Object.values(providersByRegion)[0];
+
+  const allProviders = regionData
+    ? [
+        ...(regionData.flatrate || []),
+        ...(regionData.rent || []),
+        ...(regionData.buy || []),
+      ]
+    : [];
+
+  // Duplicate providers hata do (agar ek hi platform flatrate + rent dono mein hai)
+  const uniqueProviders = Array.from(
+    new Map(allProviders.map((p) => [p.provider_id, p])).values()
+  );
+
+  const similarMovies = movie.similar?.results?.slice(0, 10) || [];
+
   return (
     <div>
       {/* Backdrop hero */}
@@ -87,12 +116,12 @@ export default function MovieDetail({ movie, onBack }) {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-8 -mt-40 relative flex flex-col md:flex-row gap-10">
+      <div className="max-w-7xl mx-auto px-8 -mt-40 relative flex flex-col md:flex-row items-start gap-10">
         {/* Poster */}
         <img
           src={getImageUrl(movie.poster_path, "w500")}
           alt={movie.title}
-          className="w-48 md:w-64 rounded-2xl shadow-2xl shrink-0"
+          className="w-48 md:w-64 aspect-[2/3] object-cover rounded-2xl shadow-2xl shrink-0"
         />
 
         {/* Info */}
@@ -146,6 +175,35 @@ export default function MovieDetail({ movie, onBack }) {
             ))}
           </div>
 
+          {/* Director / Writer / Producer */}
+          {(director || writer || producers.length > 0) && (
+            <div
+              className="mt-5 flex flex-col gap-1.5 text-sm opacity-90"
+              style={{ fontFamily: "Inter" }}
+            >
+              {director && (
+                <p>
+                  <span className="font-semibold opacity-70">Director: </span>
+                  {director.name}
+                </p>
+              )}
+              {writer && (
+                <p>
+                  <span className="font-semibold opacity-70">Writer: </span>
+                  {writer.name}
+                </p>
+              )}
+              {producers.length > 0 && (
+                <p>
+                  <span className="font-semibold opacity-70">
+                    {producers.length > 1 ? "Producers: " : "Producer: "}
+                  </span>
+                  {producers.map((p) => p.name).join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Overview */}
           <p
             className="mt-6 max-w-2xl leading-relaxed opacity-85"
@@ -153,6 +211,44 @@ export default function MovieDetail({ movie, onBack }) {
           >
             {movie.overview}
           </p>
+
+          {/* OTT / Streaming availability */}
+          {uniqueProviders.length > 0 && (
+            <div className="mt-6">
+              <p
+                className="text-sm font-semibold opacity-70 mb-3"
+                style={{ fontFamily: "Inter" }}
+              >
+                Available on:
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                {uniqueProviders.map((p) => (
+                  <div
+                    key={p.provider_id}
+                    title={p.provider_name}
+                    className="w-11 h-11 rounded-xl overflow-hidden shadow-md"
+                  >
+                    <img
+                      src={getImageUrl(p.logo_path, "w92")}
+                      alt={p.provider_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+              {regionData?.link && (
+                <a
+                  href={regionData.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-xs opacity-60 hover:opacity-100 transition underline"
+                  style={{ fontFamily: "Inter" }}
+                >
+                  Powered by JustWatch
+                </a>
+              )}
+            </div>
+          )}
 
           {/* Trailer button */}
           <div className="mt-7 flex gap-4">
@@ -213,6 +309,73 @@ export default function MovieDetail({ movie, onBack }) {
                   {person.character}
                 </p>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Similar Movies */}
+      {similarMovies.length > 0 && (
+        <div className="max-w-7xl mx-auto px-8 mt-16 mb-16">
+          <style>{`
+            @keyframes cardFadeUp {
+              from { opacity: 0; transform: translateY(24px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .similar-card { animation: cardFadeUp 0.5s ease both; }
+            .similar-card:hover .poster-img { transform: scale(1.08); }
+            .similar-card:hover .play-overlay { opacity: 1; }
+          `}</style>
+
+          <h2
+            className="text-2xl font-bold mb-6"
+            style={{ fontFamily: "Poppins" }}
+          >
+            You May Also Like
+          </h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+            {similarMovies.map((m, index) => (
+              <button
+                key={m.id}
+                onClick={() => navigate(`/movie/${m.id}`)}
+                className="similar-card text-left rounded-2xl overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-2 focus:outline-none focus:ring-2"
+                style={{
+                  background: darkMode ? "#111827" : "#ffffff",
+                  animationDelay: `${(index % 10) * 0.06}s`,
+                  ringColor: "#7C3AED",
+                }}
+              >
+                <div className="relative overflow-hidden aspect-[2/3]">
+                  <img
+                    src={getImageUrl(m.poster_path, "w342")}
+                    alt={m.title}
+                    className="poster-img w-full h-full object-cover transition-transform duration-500"
+                  />
+                  <div
+                    className="play-overlay absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300"
+                    style={{ background: "#00000066" }}
+                  >
+                    <div className="p-3 rounded-full" style={{ background: "#7C3AED" }}>
+                      <Play size={20} color="white" fill="white" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3">
+                  <h3 className="font-semibold text-sm truncate" style={{ fontFamily: "Poppins" }}>
+                    {m.title}
+                  </h3>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-xs opacity-70" style={{ fontFamily: "Inter" }}>
+                      {m.release_date?.slice(0, 4) || "—"}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs font-medium">
+                      <Star size={12} fill="#F59E0B" color="#F59E0B" />
+                      {m.vote_average?.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+              </button>
             ))}
           </div>
         </div>

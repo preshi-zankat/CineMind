@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import MyList from "./pages/MyList";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
+import Moviesearch from "./pages/Moviesearch";
+import Trending from "./pages/Trending";
 
 function AppLayout() {
   const { bg, color } = useTheme();
@@ -26,7 +28,8 @@ function AppLayout() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/movie/:id" element={<MoviePage />} />
-          <Route path="/movies" element={<ComingSoon title="Movies" />} />
+          <Route path="/movies" element={<Moviesearch />} />
+          <Route path="/trending" element={<Trending />} />
           <Route path="/tv" element={<ComingSoon title="TV Shows" />} />
           <Route
             path="/my-list"

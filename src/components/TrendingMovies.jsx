@@ -74,7 +74,7 @@ export default function TrendingMovies({ onSelect }) {
           </h2>
         </div>
         <a
-          href="#"
+          href="/trending"
           className="font-semibold hover:opacity-70 transition"
           style={{ color: "#7C3AED", fontFamily: "Inter" }}
         >
