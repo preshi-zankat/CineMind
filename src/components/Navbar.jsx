@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { logout } from "../appwrite/auth";
+import { getProfileImageUrl } from "../appwrite/storage";
 import toast from "react-hot-toast";
 
 export default function Navbar() {
@@ -23,6 +24,8 @@ export default function Navbar() {
     color: isActive ? "#7C3AED" : color,
     fontWeight: isActive ? 700 : 500,
   });
+
+  const profileImageUrl = user ? getProfileImageUrl(user.prefs?.profileImageId) : null;
 
   const handleLogout = async () => {
     try {
@@ -82,15 +85,40 @@ export default function Navbar() {
           </button>
 
           {user ? (
-            // Logged in -> sirf icon wala logout button
-            <button
-              onClick={handleLogout}
-              title="Logout"
-              className="p-2 rounded-full transition hover:scale-110"
-              style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
-            >
-              <LogOut size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Profile avatar - click karke /profile pe jaata hai */}
+              <NavLink
+                to="/profile"
+                title="My Profile"
+                className="w-9 h-9 rounded-full overflow-hidden shrink-0 shadow-sm transition hover:scale-110 flex items-center justify-center"
+                style={{ background: darkMode ? "#111827" : "#E5E7EB" }}
+              >
+                {profileImageUrl ? (
+                  <img
+                    src={profileImageUrl}
+                    alt={user.name || "Profile"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className="text-sm font-bold"
+                    style={{ color: "#7C3AED", fontFamily: "Poppins, sans-serif" }}
+                  >
+                    {user.name?.[0]?.toUpperCase() || "?"}
+                  </span>
+                )}
+              </NavLink>
+
+              {/* Logout - icon only */}
+              <button
+                onClick={handleLogout}
+                title="Logout"
+                className="p-2 rounded-full transition hover:scale-110"
+                style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
           ) : (
             // Logged out -> Login + Signup buttons
             <div className="hidden sm:flex items-center gap-2">
@@ -138,6 +166,29 @@ export default function Navbar() {
               {link.label}
             </NavLink>
           ))}
+
+          {user && (
+            <NavLink
+              to="/profile"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3"
+              style={linkStyle}
+            >
+              <span
+                className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0"
+                style={{ background: darkMode ? "#111827" : "#E5E7EB" }}
+              >
+                {profileImageUrl ? (
+                  <img src={profileImageUrl} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs font-bold" style={{ color: "#7C3AED" }}>
+                    {user.name?.[0]?.toUpperCase() || "?"}
+                  </span>
+                )}
+              </span>
+              My Profile
+            </NavLink>
+          )}
 
           {!user && (
             <div className="flex items-center gap-3 pt-2">

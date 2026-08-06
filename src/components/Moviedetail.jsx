@@ -1,4 +1,4 @@
-import { Star, Clock, Calendar, Play, ArrowLeft, Heart } from "lucide-react";
+import { Star, Clock, Calendar, Play, ArrowLeft, Heart, Bookmark } from "lucide-react";
 import { getImageUrl } from "../lib/tmdb";
 import { useTheme } from "../context/ThemeContext";
 import { useState, useEffect } from "react";
@@ -7,6 +7,11 @@ import toast from "react-hot-toast";
 
 import { useAuth } from "../context/AuthContext";
 import { addFavorite, removeFavorite, isFavorite } from "../appwrite/favorites";
+import {
+  addToWatchlist,
+  removeFromWatchlist,
+  isInWatchlist,
+} from "../appwrite/watchlist";
 
 export default function MovieDetail({ movie, onBack }) {
   const { darkMode } = useTheme();
@@ -17,6 +22,7 @@ export default function MovieDetail({ movie, onBack }) {
   const { user } = useAuth();
 
   const [favorite, setFavorite] = useState(null);
+  const [watchlistItem, setWatchlistItem] = useState(null);
 
   useEffect(() => {
     if (!user || !movie) return;
@@ -26,7 +32,13 @@ export default function MovieDetail({ movie, onBack }) {
       setFavorite(fav);
     }
 
+    async function checkWatchlist() {
+      const item = await isInWatchlist(movie.id, user.$id);
+      setWatchlistItem(item);
+    }
+
     checkFavorite();
+    checkWatchlist();
   }, [movie, user]);
 
   const handleFavorite = async () => {
@@ -47,6 +59,28 @@ export default function MovieDetail({ movie, onBack }) {
     } catch (error) {
       console.error(error);
       toast.error("Failed to update favorite status.");
+    }
+  };
+
+  const handleWatchlist = async () => {
+    if (!user) {
+      toast.error("Please login first");
+      return;
+    }
+
+    try {
+      if (watchlistItem) {
+        await removeFromWatchlist(watchlistItem.$id);
+        setWatchlistItem(null);
+        toast.success("Removed from watchlist.");
+      } else {
+        const newItem = await addToWatchlist(movie, user.$id);
+        setWatchlistItem(newItem);
+        toast.success("Movie added to watchlist.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update watchlist.");
     }
   };
 
@@ -251,7 +285,7 @@ export default function MovieDetail({ movie, onBack }) {
           )}
 
           {/* Trailer button */}
-          <div className="mt-7 flex gap-4">
+          <div className="mt-7 flex flex-wrap gap-4">
             {trailer && (
               <a
                 href={`https://www.youtube.com/watch?v=${trailer.key}`}
@@ -280,6 +314,31 @@ export default function MovieDetail({ movie, onBack }) {
                 color={favorite ? "#EF4444" : darkMode ? "#FFFFFF" : "#111827"}
               />
               {favorite ? "Unfavorite" : "Favorite"}
+            </button>
+
+            <button
+              onClick={handleWatchlist}
+              className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold border transition-all duration-200 hover:scale-105"
+              style={{
+                background: watchlistItem
+                  ? "#7C3AED20"
+                  : darkMode
+                  ? "#1F2937"
+                  : "#FFFFFF",
+                color: watchlistItem
+                  ? "#7C3AED"
+                  : darkMode
+                  ? "#FFFFFF"
+                  : "#111827",
+                border: watchlistItem ? "1px solid #7C3AED" : "1px solid #D1D5DB",
+              }}
+            >
+              <Bookmark
+                size={18}
+                fill={watchlistItem ? "#7C3AED" : "none"}
+                color={watchlistItem ? "#7C3AED" : darkMode ? "#FFFFFF" : "#111827"}
+              />
+              {watchlistItem ? "In Watchlist" : "Add to Watchlist"}
             </button>
           </div>
         </div>

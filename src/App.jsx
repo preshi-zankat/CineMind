@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useTheme } from "./context/ThemeContext";
-
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -9,11 +8,15 @@ import ComingSoon from "./pages/ComingSoon";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import MyList from "./pages/MyList";
+import MovieSearch from "./pages/MovieSearch";
+import Trending from "./pages/Trending";
+import WatchList from "./pages/WatchList";
+import Profile from "./pages/Profile";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
-import Moviesearch from "./pages/Moviesearch";
-import Trending from "./pages/Trending";
 
+// Navbar/Footer yaha se global mil rahe hai, isliye ye ThemeProvider ke andar
+// hona chahiye taaki useTheme() kaam kare
 function AppLayout() {
   const { bg, color } = useTheme();
 
@@ -28,17 +31,11 @@ function AppLayout() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/movie/:id" element={<MoviePage />} />
-          <Route path="/movies" element={<Moviesearch />} />
-          <Route path="/trending" element={<Trending />} />
           <Route path="/tv" element={<ComingSoon title="TV Shows" />} />
-          <Route
-            path="/my-list"
-            element={
-              <ProtectedRoute>
-                <MyList />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/movies" element={<MovieSearch />} />
+          <Route path="/trending" element={<Trending />} />
+
+          {/* Public-only routes - agar already logged in hai to yaha nahi aa payega */}
           <Route
             path="/signup"
             element={
@@ -55,6 +52,32 @@ function AppLayout() {
               </PublicRoute>
             }
           />
+
+          {/* Protected routes - sirf logged-in user ke liye */}
+          <Route
+            path="/my-list"
+            element={
+              <ProtectedRoute>
+                <MyList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/watchlist"
+            element={
+              <ProtectedRoute>
+                <WatchList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </main>
 
@@ -65,8 +88,10 @@ function AppLayout() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppLayout />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <AppLayout />
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }

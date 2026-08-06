@@ -1,8 +1,3 @@
-// src/lib/tmdb.js
-// Yaha apni TMDB API key .env (project root) mein daal:
-// VITE_TMDB_API_KEY=your_key_here
-// Key free milti hai: https://www.themoviedb.org/settings/api
-// Note: Vite mein sirf VITE_ prefix wale env vars client code mein expose hote hai
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const BASE_URL = "https://api.themoviedb.org/3";
@@ -76,7 +71,6 @@ export async function getPopularMovies(page = 1) {
   return res.json();
 }
 
-// Filters ke saath movies dhundta hai. Sirf jo filter diya gaya hai wahi param mein jata hai.
 export async function discoverMovies({ genre, language, minRating, page = 1 } = {}) {
   const params = new URLSearchParams({
     api_key: API_KEY,
@@ -98,9 +92,6 @@ export async function discoverMovies({ genre, language, minRating, page = 1 } = 
   return res.json();
 }
 
-// TMDB ka /trending endpoint country-wise filter support nahi karta,
-// isliye specific country ke liye discover endpoint use karte hai -
-// us country mein produce hui movies ko popularity ke hisaab se sort karke.
 export async function getTrendingByCountry(countryCode, page = 1) {
   const params = new URLSearchParams({
     api_key: API_KEY,
