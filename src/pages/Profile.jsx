@@ -4,9 +4,11 @@ import { Camera, Pencil, Check, X, Star, Play, Heart, Bookmark } from "lucide-re
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { getImageUrl } from "../lib/tmdb";
+import { getImageUrl, getMovieDetails } from "../lib/tmdb";
 import { getFavorites } from "../appwrite/favorites";
 import { getWatchlist } from "../appwrite/watchlist";
+import { getUserReviews } from "../appwrite/reviews";
+import StarRating from "../components/StarRating";
 import { updateUserName, updateUserPrefs } from "../appwrite/profile";
 import { uploadProfileImage, getProfileImageUrl, deleteProfileImage } from "../appwrite/storage";
 
@@ -23,6 +25,7 @@ export default function Profile() {
 
   const [favorites, setFavorites] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
+  const [myReviews, setMyReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,12 +34,27 @@ export default function Profile() {
 
     async function loadData() {
       try {
-        const [favData, watchData] = await Promise.all([
+        const [favData, watchData, reviewData] = await Promise.all([
           getFavorites(user.$id),
           getWatchlist(user.$id),
+          getUserReviews(user.$id),
         ]);
         setFavorites(favData);
         setWatchlist(watchData);
+
+        // Reviews table sirf movieId store karta hai (title/poster nahi),
+        // isliye har review ke liye TMDB se movie details fetch kar rahe hai
+        const enrichedReviews = await Promise.all(
+          reviewData.map(async (r) => {
+            try {
+              const movieInfo = await getMovieDetails(r.movieId);
+              return { ...r, title: movieInfo.title, poster: movieInfo.poster_path };
+            } catch {
+              return { ...r, title: "Unknown Movie", poster: null };
+            }
+          })
+        );
+        setMyReviews(enrichedReviews);
       } catch (err) {
         console.error(err);
       } finally {
@@ -50,7 +68,7 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <p style={{ fontFamily: "Inter" }}>Profile dekhne ke liye login kar.</p>
+        <p style={{ fontFamily: "Inter" }}>You are not logged in.</p>
         <button
           onClick={() => navigate("/login")}
           className="px-6 py-2 rounded-full font-semibold"
@@ -66,7 +84,7 @@ export default function Profile() {
 
   const handleSaveName = async () => {
     if (!nameInput.trim()) {
-      toast.error("Name khaali nahi ho sakta.");
+      toast.error("Name cannot be empty.");
       return;
     }
     setSavingName(true);
@@ -77,7 +95,7 @@ export default function Profile() {
       setEditingName(false);
     } catch (err) {
       console.error(err);
-      toast.error("Name update nahi hua.");
+      toast.error("Failed to update name.");
     } finally {
       setSavingName(false);
     }
@@ -102,7 +120,7 @@ export default function Profile() {
       toast.success("Profile picture updated.");
     } catch (err) {
       console.error(err);
-      toast.error("Image upload nahi hui.");
+      toast.error("Failed to upload image.");
     } finally {
       setUploadingImage(false);
       e.target.value = "";
@@ -270,6 +288,9 @@ export default function Profile() {
             <span style={{ fontFamily: "Inter" }}>
               <strong>{watchlist.length}</strong> Watchlist
             </span>
+            <span style={{ fontFamily: "Inter" }}>
+              <strong>{myReviews.length}</strong> Reviews
+            </span>
           </div>
         </div>
       </div>
@@ -281,15 +302,72 @@ export default function Profile() {
             <Heart size={20} fill="#EF4444" color="#EF4444" />,
             favorites,
             "/my-list",
-            "Abhi koi favorite movie nahi hai."
+            "You haven't added any favorites yet."
           )}
           {renderRow(
             "Watchlist",
             <Bookmark size={20} fill="#7C3AED" color="#7C3AED" />,
             watchlist,
             "/watchlist",
-            "Abhi watchlist khaali hai."
+            "Your watchlist is empty."
           )}
+
+          {/* My Reviews - text hoti hai isliye vertical list mein */}
+          <div className="mt-10">
+            <h2
+              className="text-xl font-bold flex items-center gap-2 mb-4"
+              style={{ fontFamily: "Poppins" }}
+            >
+              <Star size={20} fill="#F59E0B" color="#F59E0B" />
+              My Reviews
+            </h2>
+
+            {myReviews.length === 0 ? (
+              <p className="opacity-60 text-sm" style={{ fontFamily: "Inter" }}>
+                You haven't written any reviews yet.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {myReviews.map((r) => (
+                  <button
+                    key={r.$id}
+                    onClick={() => navigate(`/movie/${r.movieId}`)}
+                    className="w-full flex items-start gap-4 text-left rounded-2xl p-4 transition hover:opacity-90"
+                    style={{ background: cardBg }}
+                  >
+                    <img
+                      src={getImageUrl(r.poster)}
+                      alt={r.title}
+                      className="w-14 h-20 object-cover rounded-lg shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold truncate" style={{ fontFamily: "Poppins" }}>
+                          {r.title}
+                        </p>
+                        <StarRating value={r.rating} readOnly size={14} />
+                      </div>
+                      {r.review && (
+                        <p
+                          className="text-sm opacity-75 mt-1 line-clamp-2"
+                          style={{ fontFamily: "Inter" }}
+                        >
+                          {r.review}
+                        </p>
+                      )}
+                      <p className="text-xs opacity-50 mt-1" style={{ fontFamily: "Inter" }}>
+                        {new Date(r.$createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

@@ -1,3 +1,8 @@
+// src/lib/tmdb.js
+// Yaha apni TMDB API key .env (project root) mein daal:
+// VITE_TMDB_API_KEY=your_key_here
+// Key free milti hai: https://www.themoviedb.org/settings/api
+// Note: Vite mein sirf VITE_ prefix wale env vars client code mein expose hote hai
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const BASE_URL = "https://api.themoviedb.org/3";
@@ -71,6 +76,7 @@ export async function getPopularMovies(page = 1) {
   return res.json();
 }
 
+// Filters ke saath movies dhundta hai. Sirf jo filter diya gaya hai wahi param mein jata hai.
 export async function discoverMovies({ genre, language, minRating, page = 1 } = {}) {
   const params = new URLSearchParams({
     api_key: API_KEY,
@@ -92,6 +98,9 @@ export async function discoverMovies({ genre, language, minRating, page = 1 } = 
   return res.json();
 }
 
+// TMDB ka /trending endpoint country-wise filter support nahi karta,
+// isliye specific country ke liye discover endpoint use karte hai -
+// us country mein produce hui movies ko popularity ke hisaab se sort karke.
 export async function getTrendingByCountry(countryCode, page = 1) {
   const params = new URLSearchParams({
     api_key: API_KEY,
@@ -102,6 +111,91 @@ export async function getTrendingByCountry(countryCode, page = 1) {
   });
 
   const res = await fetch(`${BASE_URL}/discover/movie?${params.toString()}`);
+
+  if (!res.ok) {
+    throw new Error(`TMDB request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// ===== TV Shows =====
+
+export async function getTrendingTV(page = 1) {
+  const res = await fetch(
+    `${BASE_URL}/trending/tv/week?api_key=${API_KEY}&language=en-US&page=${page}`
+  );
+
+  if (!res.ok) {
+    throw new Error(`TMDB request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function getPopularTV(page = 1) {
+  const res = await fetch(
+    `${BASE_URL}/tv/popular?api_key=${API_KEY}&language=en-US&page=${page}`
+  );
+
+  if (!res.ok) {
+    throw new Error(`TMDB request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function searchTV(query) {
+  const res = await fetch(
+    `${BASE_URL}/search/tv?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(query)}`
+  );
+
+  if (!res.ok) {
+    throw new Error(`TMDB request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function getTVDetails(id) {
+  const res = await fetch(
+    `${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=en-US&append_to_response=credits,videos,similar,watch/providers`
+  );
+
+  if (!res.ok) {
+    throw new Error(`TMDB request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function getTVGenres() {
+  const res = await fetch(
+    `${BASE_URL}/genre/tv/list?api_key=${API_KEY}&language=en-US`
+  );
+
+  if (!res.ok) {
+    throw new Error(`TMDB request failed: ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.genres || [];
+}
+
+// Filters ke saath TV shows dhundta hai (movies wale discoverMovies jaisa hi)
+export async function discoverTV({ genre, language, minRating, page = 1 } = {}) {
+  const params = new URLSearchParams({
+    api_key: API_KEY,
+    language: "en-US",
+    sort_by: "popularity.desc",
+    page: String(page),
+  });
+
+  if (genre) params.set("with_genres", genre);
+  if (language) params.set("with_original_language", language);
+  if (minRating) params.set("vote_average.gte", String(minRating));
+
+  const res = await fetch(`${BASE_URL}/discover/tv?${params.toString()}`);
 
   if (!res.ok) {
     throw new Error(`TMDB request failed: ${res.status}`);

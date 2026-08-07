@@ -12,6 +12,8 @@ import MovieSearch from "./pages/MovieSearch";
 import Trending from "./pages/Trending";
 import WatchList from "./pages/WatchList";
 import Profile from "./pages/Profile";
+import TVShows from "./pages/TVShows";
+import TVPage from "./pages/TVPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
 
@@ -31,7 +33,8 @@ function AppLayout() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/movie/:id" element={<MoviePage />} />
-          <Route path="/tv" element={<ComingSoon title="TV Shows" />} />
+          <Route path="/tv" element={<TVShows />} />
+          <Route path="/tv/:id" element={<TVPage />} />
           <Route path="/movies" element={<MovieSearch />} />
           <Route path="/trending" element={<Trending />} />
 

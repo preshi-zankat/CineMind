@@ -104,7 +104,7 @@ export default function Trending() {
           </p>
         ) : movies.length === 0 ? (
           <p className="opacity-60" style={{ fontFamily: "Inter" }}>
-            Is region ke liye koi trending movie nahi mili.
+            No movies found for the selected country. Try another country or check back later.
           </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">

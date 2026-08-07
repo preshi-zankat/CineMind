@@ -92,7 +92,7 @@ export default function WatchList() {
 
       {watchlist.length === 0 ? (
         <h2 className="opacity-70" style={{ fontFamily: "Inter" }}>
-          Watchlist khaali hai. Movies detail page se "Add to Watchlist" pe click kar.
+          Your watchlist is empty. Start adding movies to your watchlist!
         </h2>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">

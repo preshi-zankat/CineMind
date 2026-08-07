@@ -28,11 +28,13 @@ export default function Signup() {
 
     try {
       await signup(form);
+      toast.success("Account created successfully!");
+      window.location.reload();
       navigate("/");
     } catch (err) {
       console.error(err);
-      setError(err.message || "Kuch galat ho gaya, dobara try kar.");
-      toast.error(err.message || "Kuch galat ho gaya, dobara try kar.");
+      setError(err.message || "Something went wrong, please try again.");
+      toast.error(err.message || "Something went wrong, please try again.");
     } finally {
       setLoading(false);
     }

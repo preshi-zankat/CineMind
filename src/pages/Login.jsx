@@ -27,11 +27,14 @@ export default function Login() {
 
     try {
       await login(form);
+      toast.success("Login successful!");
+      //refresh the page to fetch user data and redirect to home
+      window.location.reload();
       navigate("/");
     } catch (err) {
       console.error(err);
-      setError(err.message || "Login fail ho gaya, dobara try kar.");
-      toast.error(err.message || "Login fail ho gaya, dobara try kar.");
+      setError(err.message || "Something went wrong, please try again.");
+      toast.error(err.message || "Login failed, please try again.");
     } finally {
       setLoading(false);
     }

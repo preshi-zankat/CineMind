@@ -1,8 +1,17 @@
-import { Star, Clock, Calendar, Play, ArrowLeft, Heart, Bookmark } from "lucide-react";
+import {
+  Star,
+  Clock,
+  Calendar,
+  Play,
+  ArrowLeft,
+  Heart,
+  Bookmark,
+} from "lucide-react";
 import { getImageUrl } from "../lib/tmdb";
 import { useTheme } from "../context/ThemeContext";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { useAuth } from "../context/AuthContext";
@@ -12,6 +21,13 @@ import {
   removeFromWatchlist,
   isInWatchlist,
 } from "../appwrite/watchlist";
+import {
+  addReview,
+  getUserReviews,
+  updateReview,
+  deleteReview,
+} from "../appwrite/reviews";
+import StarRating from "./StarRating";
 
 export default function MovieDetail({ movie, onBack }) {
   const { darkMode } = useTheme();
@@ -24,21 +40,58 @@ export default function MovieDetail({ movie, onBack }) {
   const [favorite, setFavorite] = useState(null);
   const [watchlistItem, setWatchlistItem] = useState(null);
 
+  const [reviews, setReviews] = useState([]);
+  const [myReview, setMyReview] = useState(null);
+  const [ratingInput, setRatingInput] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+
   useEffect(() => {
     if (!user || !movie) return;
 
     async function checkFavorite() {
-      const fav = await isFavorite(movie.id, user.$id);
+      const fav = await isFavorite(movie.id, user.$id, "movie");
       setFavorite(fav);
     }
 
     async function checkWatchlist() {
-      const item = await isInWatchlist(movie.id, user.$id);
+      const item = await isInWatchlist(movie.id, user.$id, "movie");
       setWatchlistItem(item);
     }
 
     checkFavorite();
     checkWatchlist();
+  }, [movie, user]);
+
+  useEffect(() => {
+    if (!movie) return;
+
+    async function loadReviews() {
+      setLoadingReviews(true);
+      try {
+        const allReviews = await getUserReviews(user.$id);
+        setReviews(allReviews);
+
+        if (user) {
+          const mine = allReviews.find((r) => r.userId === user.$id) || null;
+          setMyReview(mine);
+          if (mine) {
+            setRatingInput(mine.rating);
+            setReviewText(mine.review);
+          } else {
+            setRatingInput(0);
+            setReviewText("");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load reviews:", err);
+      } finally {
+        setLoadingReviews(false);
+      }
+    }
+
+    loadReviews();
   }, [movie, user]);
 
   const handleFavorite = async () => {
@@ -52,7 +105,7 @@ export default function MovieDetail({ movie, onBack }) {
         await removeFavorite(favorite.$id);
         setFavorite(null);
       } else {
-        const newFavorite = await addFavorite(movie, user.$id);
+        const newFavorite = await addFavorite(movie, user.$id, "movie");
         setFavorite(newFavorite);
         toast.success("Movie added to favorites.");
       }
@@ -74,13 +127,75 @@ export default function MovieDetail({ movie, onBack }) {
         setWatchlistItem(null);
         toast.success("Removed from watchlist.");
       } else {
-        const newItem = await addToWatchlist(movie, user.$id);
+        const newItem = await addToWatchlist(movie, user.$id, "movie");
         setWatchlistItem(newItem);
         toast.success("Movie added to watchlist.");
       }
     } catch (error) {
       console.error(error);
       toast.error("Failed to update watchlist.");
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user) {
+      toast.error("Please login first");
+      return;
+    }
+    if (ratingInput === 0) {
+      toast.error("Rating select kar pehle.");
+      return;
+    }
+    if (!reviewText.trim()) {
+      toast.error("Review likhna zaroori hai.");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      if (myReview) {
+        const updated = await updateReview(myReview.$id, {
+          rating: ratingInput,
+          reviewText: reviewText.trim(),
+        });
+        setReviews((prev) =>
+          prev.map((r) => (r.$id === updated.$id ? updated : r)),
+        );
+        setMyReview(updated);
+        toast.success("Review updated.");
+      } else {
+        const newReview = await addReview({
+          contentId: movie.id,
+          contentType: "movie",
+          userId: user.$id,
+          userName: user.name,
+          rating: ratingInput,
+          reviewText: reviewText.trim(),
+        });
+        setReviews((prev) => [newReview, ...prev]);
+        setMyReview(newReview);
+        toast.success("Review submitted.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Review submit nahi hua.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!myReview) return;
+    try {
+      await deleteReview(myReview.$id);
+      setReviews((prev) => prev.filter((r) => r.$id !== myReview.$id));
+      setMyReview(null);
+      setRatingInput(0);
+      setReviewText("");
+      toast.success("Review deleted.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Review delete nahi hua.");
     }
   };
 
@@ -101,7 +216,9 @@ export default function MovieDetail({ movie, onBack }) {
   // isliye India try karo, warna US, warna jo bhi pehla region mile
   const providersByRegion = movie["watch/providers"]?.results || {};
   const regionData =
-    providersByRegion.IN || providersByRegion.US || Object.values(providersByRegion)[0];
+    providersByRegion.IN ||
+    providersByRegion.US ||
+    Object.values(providersByRegion)[0];
 
   const allProviders = regionData
     ? [
@@ -113,10 +230,17 @@ export default function MovieDetail({ movie, onBack }) {
 
   // Duplicate providers hata do (agar ek hi platform flatrate + rent dono mein hai)
   const uniqueProviders = Array.from(
-    new Map(allProviders.map((p) => [p.provider_id, p])).values()
+    new Map(allProviders.map((p) => [p.provider_id, p])).values(),
   );
 
   const similarMovies = movie.similar?.results?.slice(0, 10) || [];
+
+  const avgUserRating =
+    reviews.length > 0
+      ? (
+          reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        ).toFixed(1)
+      : null;
 
   return (
     <div>
@@ -323,25 +447,181 @@ export default function MovieDetail({ movie, onBack }) {
                 background: watchlistItem
                   ? "#7C3AED20"
                   : darkMode
-                  ? "#1F2937"
-                  : "#FFFFFF",
+                    ? "#1F2937"
+                    : "#FFFFFF",
                 color: watchlistItem
                   ? "#7C3AED"
                   : darkMode
-                  ? "#FFFFFF"
-                  : "#111827",
-                border: watchlistItem ? "1px solid #7C3AED" : "1px solid #D1D5DB",
+                    ? "#FFFFFF"
+                    : "#111827",
+                border: watchlistItem
+                  ? "1px solid #7C3AED"
+                  : "1px solid #D1D5DB",
               }}
             >
               <Bookmark
                 size={18}
                 fill={watchlistItem ? "#7C3AED" : "none"}
-                color={watchlistItem ? "#7C3AED" : darkMode ? "#FFFFFF" : "#111827"}
+                color={
+                  watchlistItem ? "#7C3AED" : darkMode ? "#FFFFFF" : "#111827"
+                }
               />
               {watchlistItem ? "In Watchlist" : "Add to Watchlist"}
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Reviews & Ratings */}
+      <div className="max-w-7xl mx-auto px-8 mt-16">
+        <div className="flex items-center gap-3 mb-6">
+          <h2 className="text-2xl font-bold" style={{ fontFamily: "Poppins" }}>
+            Ratings & Reviews
+          </h2>
+          {avgUserRating && (
+            <span
+              className="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold"
+              style={{ background: "#F59E0B20", color: "#F59E0B" }}
+            >
+              <Star size={14} fill="#F59E0B" color="#F59E0B" />
+              {avgUserRating} ({reviews.length} review
+              {reviews.length > 1 ? "s" : ""})
+            </span>
+          )}
+        </div>
+
+        {/* Write / edit review */}
+        {user ? (
+          <div
+            className="rounded-2xl p-5 mb-8"
+            style={{ background: darkMode ? "#0B1120" : "#F1F5F9" }}
+          >
+            <p
+              className="text-sm font-semibold mb-2 opacity-70"
+              style={{ fontFamily: "Inter" }}
+            >
+              {myReview ? "Apna review edit karo" : "Apna rating aur review do"}
+            </p>
+            <StarRating
+              value={ratingInput}
+              onChange={setRatingInput}
+              size={26}
+            />
+
+            <textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Movie ke baare mein kya socha?"
+              rows={3}
+              className={`mt-4 w-full px-4 py-3 rounded-xl outline-none resize-none ${
+                darkMode
+                  ? "text-white placeholder:text-gray-400"
+                  : "text-gray-900 placeholder:text-gray-500"
+              }`}
+              style={{
+                background: darkMode ? "#111827" : "#ffffff",
+                fontFamily: "Inter",
+              }}
+            />
+
+            <div className="flex gap-3 mt-3">
+              <button
+                onClick={handleSubmitReview}
+                disabled={submittingReview}
+                className="px-6 py-2.5 rounded-full font-semibold transition hover:scale-105 disabled:opacity-60"
+                style={{
+                  background: "#7C3AED",
+                  color: "white",
+                  fontFamily: "Inter",
+                }}
+              >
+                {submittingReview
+                  ? "Saving..."
+                  : myReview
+                    ? "Update Review"
+                    : "Submit Review"}
+              </button>
+              {myReview && (
+                <button
+                  onClick={handleDeleteReview}
+                  className="px-6 py-2.5 rounded-full font-semibold transition hover:scale-105"
+                  style={{
+                    background: darkMode ? "#1F2937" : "#ffffff",
+                    color: "#EF4444",
+                    border: "1px solid #EF444440",
+                    fontFamily: "Inter",
+                  }}
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p
+            className="mb-8 text-sm opacity-70"
+            style={{ fontFamily: "Inter" }}
+          >
+            For reviewing movies, you must be logged in.
+            <Link to="/login" className="ml-1 font-semibold text-[#7C3AED]">
+              Login
+            </Link>
+          </p>
+        )}
+
+        {/* All reviews list */}
+        {loadingReviews ? (
+          <p className="opacity-60 text-sm" style={{ fontFamily: "Inter" }}>
+            Loading reviews...
+          </p>
+        ) : reviews.length === 0 ? (
+          <p className="opacity-60 text-sm" style={{ fontFamily: "Inter" }}>
+            no reviews yet. Be the first to review this movie!
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {reviews.map((r) => (
+              <div
+                key={r.$id}
+                className="rounded-2xl p-5"
+                style={{ background: darkMode ? "#111827" : "#ffffff" }}
+              >
+                <div className="flex items-center justify-between">
+                  <p
+                    className="font-semibold"
+                    style={{ fontFamily: "Poppins" }}
+                  >
+                    {r.userName || "CineMind User"}
+                    {user && r.userId === user.$id && (
+                      <span className="ml-1.5 text-xs font-normal opacity-60">
+                        (You)
+                      </span>
+                    )}
+                  </p>
+                  <StarRating value={r.rating} readOnly size={16} />
+                </div>
+                {r.review && (
+                  <p
+                    className="mt-2 text-sm opacity-85 leading-relaxed"
+                    style={{ fontFamily: "Inter" }}
+                  >
+                    {r.review}
+                  </p>
+                )}
+                <p
+                  className="mt-2 text-xs opacity-50"
+                  style={{ fontFamily: "Inter" }}
+                >
+                  {new Date(r.$createdAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Cast */}
@@ -414,18 +694,27 @@ export default function MovieDetail({ movie, onBack }) {
                     className="play-overlay absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300"
                     style={{ background: "#00000066" }}
                   >
-                    <div className="p-3 rounded-full" style={{ background: "#7C3AED" }}>
+                    <div
+                      className="p-3 rounded-full"
+                      style={{ background: "#7C3AED" }}
+                    >
                       <Play size={20} color="white" fill="white" />
                     </div>
                   </div>
                 </div>
 
                 <div className="p-3">
-                  <h3 className="font-semibold text-sm truncate" style={{ fontFamily: "Poppins" }}>
+                  <h3
+                    className="font-semibold text-sm truncate"
+                    style={{ fontFamily: "Poppins" }}
+                  >
                     {m.title}
                   </h3>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs opacity-70" style={{ fontFamily: "Inter" }}>
+                    <span
+                      className="text-xs opacity-70"
+                      style={{ fontFamily: "Inter" }}
+                    >
                       {m.release_date?.slice(0, 4) || "—"}
                     </span>
                     <span className="flex items-center gap-1 text-xs font-medium">
