@@ -17,6 +17,7 @@ export default function Navbar() {
     { label: "Home", to: "/" },
     { label: "Movies", to: "/movies" },
     { label: "TV Shows", to: "/tv" },
+    { label: "Suggest", to: "/suggest" },
     { label: "My List", to: "/my-list" },
   ];
 

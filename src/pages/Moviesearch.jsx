@@ -128,7 +128,7 @@ export default function MovieSearch() {
         Search Movies
       </h1>
       <p className="mt-2 opacity-70" style={{ fontFamily: "Inter" }}>
-        Title, genre, language aur rating se apni pasand ki movie dhundo
+        Search for movies by title, genre, language, or rating.
       </p>
 
       {/* Filter bar */}
@@ -213,7 +213,7 @@ export default function MovieSearch() {
           </p>
         ) : movies.length === 0 ? (
           <p className="opacity-60" style={{ fontFamily: "Inter" }}>
-            Koi movie nahi mili. Filters change karke try kar.
+            No movies found. Try changing your filters.
           </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">

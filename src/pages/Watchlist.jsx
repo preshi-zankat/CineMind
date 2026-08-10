@@ -31,8 +31,9 @@ export default function WatchList() {
     loadWatchlist();
   }, [user]);
 
-  const handleCardClick = (movie) => {
-    navigate(`/movie/${movie.movieId}`);
+  const handleCardClick = (item) => {
+    const path = item.contentType === "tv" ? "/tv" : "/movie";
+    navigate(`${path}/${item.contentId}`);
   };
 
   const handleRemove = async (e, movie) => {
@@ -92,7 +93,7 @@ export default function WatchList() {
 
       {watchlist.length === 0 ? (
         <h2 className="opacity-70" style={{ fontFamily: "Inter" }}>
-          Your watchlist is empty. Start adding movies to your watchlist!
+          Your watchlist is empty. Start adding movies or shows to keep track of what you want to watch!
         </h2>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -112,6 +113,12 @@ export default function WatchList() {
                   alt={movie.title}
                   className="poster-img w-full h-full object-cover transition-transform duration-500"
                 />
+                <span
+                  className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold backdrop-blur-md"
+                  style={{ background: "#00000080", color: "white" }}
+                >
+                  {movie.contentType === "tv" ? "TV" : "MOVIE"}
+                </span>
                 <div
                   className="play-overlay absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300"
                   style={{ background: "#00000066" }}
@@ -124,7 +131,7 @@ export default function WatchList() {
                 {/* Remove button - card ke upar right corner mein */}
                 <button
                   onClick={(e) => handleRemove(e, movie)}
-                  className="absolute top-2 right-2 px-2 py-1 rounded-lg text-xs font-semibold backdrop-blur-md transition hover:scale-105"
+                  className="absolute bottom-2 right-2 px-2 py-1 rounded-lg text-xs font-semibold backdrop-blur-md transition hover:scale-105"
                   style={{ background: "#00000080", color: "white" }}
                 >
                   Remove

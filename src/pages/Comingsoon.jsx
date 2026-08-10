@@ -5,7 +5,7 @@ export default function ComingSoon({ title }) {
         {title}
       </h1>
       <p className="mt-3 opacity-70" style={{ fontFamily: "Inter, sans-serif" }}>
-        Ye page abhi banna baaki hai.
+        Coming soon
       </p>
     </div>
   );

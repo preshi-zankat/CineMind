@@ -4,7 +4,7 @@ import { Camera, Pencil, Check, X, Star, Play, Heart, Bookmark } from "lucide-re
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { getImageUrl, getMovieDetails } from "../lib/tmdb";
+import { getImageUrl, getMovieDetails, getTVDetails } from "../lib/tmdb";
 import { getFavorites } from "../appwrite/favorites";
 import { getWatchlist } from "../appwrite/watchlist";
 import { getUserReviews } from "../appwrite/reviews";
@@ -42,15 +42,22 @@ export default function Profile() {
         setFavorites(favData);
         setWatchlist(watchData);
 
-        // Reviews table sirf movieId store karta hai (title/poster nahi),
-        // isliye har review ke liye TMDB se movie details fetch kar rahe hai
+        // Reviews table sirf contentId/contentType store karta hai (title/poster nahi),
+        // isliye har review ke liye contentType ke hisaab se TMDB se movie ya TV details fetch kar rahe hai
         const enrichedReviews = await Promise.all(
           reviewData.map(async (r) => {
             try {
-              const movieInfo = await getMovieDetails(r.movieId);
-              return { ...r, title: movieInfo.title, poster: movieInfo.poster_path };
+              const info =
+                r.contentType === "tv"
+                  ? await getTVDetails(r.contentId)
+                  : await getMovieDetails(r.contentId);
+              return {
+                ...r,
+                title: info.title || info.name,
+                poster: info.poster_path,
+              };
             } catch {
-              return { ...r, title: "Unknown Movie", poster: null };
+              return { ...r, title: "Unknown Title", poster: null };
             }
           })
         );
@@ -68,7 +75,7 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <p style={{ fontFamily: "Inter" }}>You are not logged in.</p>
+        <p style={{ fontFamily: "Inter" }}>Please log in.</p>
         <button
           onClick={() => navigate("/login")}
           className="px-6 py-2 rounded-full font-semibold"
@@ -84,7 +91,7 @@ export default function Profile() {
 
   const handleSaveName = async () => {
     if (!nameInput.trim()) {
-      toast.error("Name cannot be empty.");
+      toast.error("Name khaali nahi ho sakta.");
       return;
     }
     setSavingName(true);
@@ -95,7 +102,7 @@ export default function Profile() {
       setEditingName(false);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to update name.");
+      toast.error("Error updating name.");
     } finally {
       setSavingName(false);
     }
@@ -120,7 +127,7 @@ export default function Profile() {
       toast.success("Profile picture updated.");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to upload image.");
+      toast.error("Error uploading image.");
     } finally {
       setUploadingImage(false);
       e.target.value = "";
@@ -159,7 +166,7 @@ export default function Profile() {
           {items.slice(0, 8).map((movie) => (
             <button
               key={movie.$id}
-              onClick={() => navigate(`/movie/${movie.movieId}`)}
+              onClick={() => navigate(`${movie.contentType === "tv" ? "/tv" : "/movie"}/${movie.contentId}`)}
               className="w-32 shrink-0 text-left rounded-xl overflow-hidden shadow-md transition-transform hover:-translate-y-1"
               style={{ background: cardBg }}
             >
@@ -169,6 +176,12 @@ export default function Profile() {
                   alt={movie.title}
                   className="w-full h-full object-cover"
                 />
+                <span
+                  className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold backdrop-blur-md"
+                  style={{ background: "#00000080", color: "white" }}
+                >
+                  {movie.contentType === "tv" ? "TV" : "MOVIE"}
+                </span>
               </div>
               <div className="p-2">
                 <p className="text-xs font-semibold truncate" style={{ fontFamily: "Poppins" }}>
@@ -302,14 +315,14 @@ export default function Profile() {
             <Heart size={20} fill="#EF4444" color="#EF4444" />,
             favorites,
             "/my-list",
-            "You haven't added any favorites yet."
+            "You haven't added any favorite movies yet."
           )}
           {renderRow(
             "Watchlist",
             <Bookmark size={20} fill="#7C3AED" color="#7C3AED" />,
             watchlist,
             "/watchlist",
-            "Your watchlist is empty."
+            "You haven't added any movies to your watchlist yet."
           )}
 
           {/* My Reviews - text hoti hai isliye vertical list mein */}
@@ -331,7 +344,7 @@ export default function Profile() {
                 {myReviews.map((r) => (
                   <button
                     key={r.$id}
-                    onClick={() => navigate(`/movie/${r.movieId}`)}
+                    onClick={() => navigate(`${r.contentType === "tv" ? "/tv" : "/movie"}/${r.contentId}`)}
                     className="w-full flex items-start gap-4 text-left rounded-2xl p-4 transition hover:opacity-90"
                     style={{ background: cardBg }}
                   >

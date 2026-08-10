@@ -44,7 +44,7 @@ export default function TVPage() {
   if (error || !show) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <p style={{ fontFamily: "Inter" }}>TV show load nahi ho payi.</p>
+        <p style={{ fontFamily: "Inter" }}>Failed to load show details.</p>
         <button
           onClick={() => navigate("/tv")}
           className="px-6 py-2 rounded-full font-semibold"

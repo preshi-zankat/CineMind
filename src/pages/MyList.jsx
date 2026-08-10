@@ -34,18 +34,16 @@ export default function MyList() {
   }, [user]);
 
   const handleRemove = async (rowId) => {
-  try {
-    await removeFavorite(rowId);
+    try {
+      await removeFavorite(rowId);
 
-    setFavorites((prev) =>
-      prev.filter((movie) => movie.$id !== rowId)
-    );
-    toast.success("Movie removed from favorites.");
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to remove movie from favorites.");
-  }
-};
+      setFavorites((prev) => prev.filter((movie) => movie.$id !== rowId));
+      toast.success("Movie removed from favorites.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to remove movie from favorites.");
+    }
+  };
 
   const handleClick = (movie) => {
     // NOTE: favorite document ka Appwrite $id TMDB movie id nahi hai.
@@ -89,7 +87,7 @@ export default function MyList() {
 
       {favorites.length === 0 ? (
         <h2 className="opacity-70" style={{ fontFamily: "Inter" }}>
-          No favorite movies yet.
+          You haven't added any favorite movies yet.
         </h2>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -114,7 +112,10 @@ export default function MyList() {
                   className="play-overlay absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300"
                   style={{ background: "#00000066" }}
                 >
-                  <div className="p-3 rounded-full" style={{ background: "#7C3AED" }}>
+                  <div
+                    className="p-3 rounded-full"
+                    style={{ background: "#7C3AED" }}
+                  >
                     <Play size={20} color="white" fill="white" />
                   </div>
                 </div>
@@ -128,25 +129,21 @@ export default function MyList() {
                   {movie.title}
                 </h3>
                 <div className="flex items-center justify-between mt-2">
-  <span className="flex items-center gap-1 text-xs font-medium">
-    <Star size={12} fill="#F59E0B" color="#F59E0B" />
-    {movie.rating?.toFixed(1)}
-  </span>
+                  <span className="flex items-center gap-1 text-xs font-medium">
+                    <Star size={12} fill="#F59E0B" color="#F59E0B" />
+                    {movie.rating?.toFixed(1)}
+                  </span>
 
-  <button
-    onClick={(e) => {
-      e.stopPropagation(); // Card click nahi hoga
-      handleRemove(movie.$id);
-    }}
-    className="transition-transform hover:scale-110"
-  >
-    <Heart
-      size={16}
-      fill="#EF4444"
-      color="#EF4444"
-    />
-  </button>
-</div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Card click nahi hoga
+                      handleRemove(movie.$id);
+                    }}
+                    className="transition-transform hover:scale-110"
+                  >
+                    <Heart size={16} fill="#EF4444" color="#EF4444" />
+                  </button>
+                </div>
               </div>
             </button>
           ))}

@@ -1,17 +1,8 @@
-import {
-  Star,
-  Clock,
-  Calendar,
-  Play,
-  ArrowLeft,
-  Heart,
-  Bookmark,
-} from "lucide-react";
+import { Star, Clock, Calendar, Play, ArrowLeft, Heart, Bookmark } from "lucide-react";
 import { getImageUrl } from "../lib/tmdb";
 import { useTheme } from "../context/ThemeContext";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { useAuth } from "../context/AuthContext";
@@ -23,7 +14,7 @@ import {
 } from "../appwrite/watchlist";
 import {
   addReview,
-  getUserReviews,
+  getContentReviews,
   updateReview,
   deleteReview,
 } from "../appwrite/reviews";
@@ -70,7 +61,7 @@ export default function MovieDetail({ movie, onBack }) {
     async function loadReviews() {
       setLoadingReviews(true);
       try {
-        const allReviews = await getUserReviews(user.$id);
+        const allReviews = await getContentReviews(movie.id, "movie");
         setReviews(allReviews);
 
         if (user) {
@@ -143,11 +134,11 @@ export default function MovieDetail({ movie, onBack }) {
       return;
     }
     if (ratingInput === 0) {
-      toast.error("Rating select kar pehle.");
+      toast.error("Please select a rating.");
       return;
     }
     if (!reviewText.trim()) {
-      toast.error("Review likhna zaroori hai.");
+      toast.error("Please write a review.");
       return;
     }
 
@@ -158,9 +149,7 @@ export default function MovieDetail({ movie, onBack }) {
           rating: ratingInput,
           reviewText: reviewText.trim(),
         });
-        setReviews((prev) =>
-          prev.map((r) => (r.$id === updated.$id ? updated : r)),
-        );
+        setReviews((prev) => prev.map((r) => (r.$id === updated.$id ? updated : r)));
         setMyReview(updated);
         toast.success("Review updated.");
       } else {
@@ -178,7 +167,7 @@ export default function MovieDetail({ movie, onBack }) {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Review submit nahi hua.");
+      toast.error("Error submitting review.");
     } finally {
       setSubmittingReview(false);
     }
@@ -195,7 +184,7 @@ export default function MovieDetail({ movie, onBack }) {
       toast.success("Review deleted.");
     } catch (error) {
       console.error(error);
-      toast.error("Review delete nahi hua.");
+      toast.error("Error deleting review.");
     }
   };
 
@@ -216,9 +205,7 @@ export default function MovieDetail({ movie, onBack }) {
   // isliye India try karo, warna US, warna jo bhi pehla region mile
   const providersByRegion = movie["watch/providers"]?.results || {};
   const regionData =
-    providersByRegion.IN ||
-    providersByRegion.US ||
-    Object.values(providersByRegion)[0];
+    providersByRegion.IN || providersByRegion.US || Object.values(providersByRegion)[0];
 
   const allProviders = regionData
     ? [
@@ -230,16 +217,14 @@ export default function MovieDetail({ movie, onBack }) {
 
   // Duplicate providers hata do (agar ek hi platform flatrate + rent dono mein hai)
   const uniqueProviders = Array.from(
-    new Map(allProviders.map((p) => [p.provider_id, p])).values(),
+    new Map(allProviders.map((p) => [p.provider_id, p])).values()
   );
 
   const similarMovies = movie.similar?.results?.slice(0, 10) || [];
 
   const avgUserRating =
     reviews.length > 0
-      ? (
-          reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-        ).toFixed(1)
+      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
       : null;
 
   return (
@@ -447,24 +432,20 @@ export default function MovieDetail({ movie, onBack }) {
                 background: watchlistItem
                   ? "#7C3AED20"
                   : darkMode
-                    ? "#1F2937"
-                    : "#FFFFFF",
+                  ? "#1F2937"
+                  : "#FFFFFF",
                 color: watchlistItem
                   ? "#7C3AED"
                   : darkMode
-                    ? "#FFFFFF"
-                    : "#111827",
-                border: watchlistItem
-                  ? "1px solid #7C3AED"
-                  : "1px solid #D1D5DB",
+                  ? "#FFFFFF"
+                  : "#111827",
+                border: watchlistItem ? "1px solid #7C3AED" : "1px solid #D1D5DB",
               }}
             >
               <Bookmark
                 size={18}
                 fill={watchlistItem ? "#7C3AED" : "none"}
-                color={
-                  watchlistItem ? "#7C3AED" : darkMode ? "#FFFFFF" : "#111827"
-                }
+                color={watchlistItem ? "#7C3AED" : darkMode ? "#FFFFFF" : "#111827"}
               />
               {watchlistItem ? "In Watchlist" : "Add to Watchlist"}
             </button>
@@ -484,8 +465,7 @@ export default function MovieDetail({ movie, onBack }) {
               style={{ background: "#F59E0B20", color: "#F59E0B" }}
             >
               <Star size={14} fill="#F59E0B" color="#F59E0B" />
-              {avgUserRating} ({reviews.length} review
-              {reviews.length > 1 ? "s" : ""})
+              {avgUserRating} ({reviews.length} review{reviews.length > 1 ? "s" : ""})
             </span>
           )}
         </div>
@@ -496,32 +476,20 @@ export default function MovieDetail({ movie, onBack }) {
             className="rounded-2xl p-5 mb-8"
             style={{ background: darkMode ? "#0B1120" : "#F1F5F9" }}
           >
-            <p
-              className="text-sm font-semibold mb-2 opacity-70"
-              style={{ fontFamily: "Inter" }}
-            >
-              {myReview ? "Apna review edit karo" : "Apna rating aur review do"}
+            <p className="text-sm font-semibold mb-2 opacity-70" style={{ fontFamily: "Inter" }}>
+              {myReview ? "Edit your review" : "Rate and review this movie"}
             </p>
-            <StarRating
-              value={ratingInput}
-              onChange={setRatingInput}
-              size={26}
-            />
+            <StarRating value={ratingInput} onChange={setRatingInput} size={26} />
 
             <textarea
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
-              placeholder="Movie ke baare mein kya socha?"
+              placeholder="Write your review here..."
               rows={3}
               className={`mt-4 w-full px-4 py-3 rounded-xl outline-none resize-none ${
-                darkMode
-                  ? "text-white placeholder:text-gray-400"
-                  : "text-gray-900 placeholder:text-gray-500"
+                darkMode ? "text-white placeholder:text-gray-400" : "text-gray-900 placeholder:text-gray-500"
               }`}
-              style={{
-                background: darkMode ? "#111827" : "#ffffff",
-                fontFamily: "Inter",
-              }}
+              style={{ background: darkMode ? "#111827" : "#ffffff", fontFamily: "Inter" }}
             />
 
             <div className="flex gap-3 mt-3">
@@ -529,17 +497,9 @@ export default function MovieDetail({ movie, onBack }) {
                 onClick={handleSubmitReview}
                 disabled={submittingReview}
                 className="px-6 py-2.5 rounded-full font-semibold transition hover:scale-105 disabled:opacity-60"
-                style={{
-                  background: "#7C3AED",
-                  color: "white",
-                  fontFamily: "Inter",
-                }}
+                style={{ background: "#7C3AED", color: "white", fontFamily: "Inter" }}
               >
-                {submittingReview
-                  ? "Saving..."
-                  : myReview
-                    ? "Update Review"
-                    : "Submit Review"}
+                {submittingReview ? "Saving..." : myReview ? "Update Review" : "Submit Review"}
               </button>
               {myReview && (
                 <button
@@ -562,8 +522,8 @@ export default function MovieDetail({ movie, onBack }) {
             className="mb-8 text-sm opacity-70"
             style={{ fontFamily: "Inter" }}
           >
-            For reviewing movies, you must be logged in.
-            <Link to="/login" className="ml-1 font-semibold text-[#7C3AED]">
+            Give ratings and reviews.{" "}
+            <Link to="/login" className="underline">
               Login
             </Link>
           </p>
@@ -576,7 +536,7 @@ export default function MovieDetail({ movie, onBack }) {
           </p>
         ) : reviews.length === 0 ? (
           <p className="opacity-60 text-sm" style={{ fontFamily: "Inter" }}>
-            no reviews yet. Be the first to review this movie!
+            No reviews yet. Be the first to review this movie!
           </p>
         ) : (
           <div className="space-y-4">
@@ -587,15 +547,10 @@ export default function MovieDetail({ movie, onBack }) {
                 style={{ background: darkMode ? "#111827" : "#ffffff" }}
               >
                 <div className="flex items-center justify-between">
-                  <p
-                    className="font-semibold"
-                    style={{ fontFamily: "Poppins" }}
-                  >
+                  <p className="font-semibold" style={{ fontFamily: "Poppins" }}>
                     {r.userName || "CineMind User"}
                     {user && r.userId === user.$id && (
-                      <span className="ml-1.5 text-xs font-normal opacity-60">
-                        (You)
-                      </span>
+                      <span className="ml-1.5 text-xs font-normal opacity-60">(You)</span>
                     )}
                   </p>
                   <StarRating value={r.rating} readOnly size={16} />
@@ -608,10 +563,7 @@ export default function MovieDetail({ movie, onBack }) {
                     {r.review}
                   </p>
                 )}
-                <p
-                  className="mt-2 text-xs opacity-50"
-                  style={{ fontFamily: "Inter" }}
-                >
+                <p className="mt-2 text-xs opacity-50" style={{ fontFamily: "Inter" }}>
                   {new Date(r.$createdAt).toLocaleDateString("en-IN", {
                     day: "numeric",
                     month: "short",
@@ -694,27 +646,18 @@ export default function MovieDetail({ movie, onBack }) {
                     className="play-overlay absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300"
                     style={{ background: "#00000066" }}
                   >
-                    <div
-                      className="p-3 rounded-full"
-                      style={{ background: "#7C3AED" }}
-                    >
+                    <div className="p-3 rounded-full" style={{ background: "#7C3AED" }}>
                       <Play size={20} color="white" fill="white" />
                     </div>
                   </div>
                 </div>
 
                 <div className="p-3">
-                  <h3
-                    className="font-semibold text-sm truncate"
-                    style={{ fontFamily: "Poppins" }}
-                  >
+                  <h3 className="font-semibold text-sm truncate" style={{ fontFamily: "Poppins" }}>
                     {m.title}
                   </h3>
                   <div className="flex items-center justify-between mt-1">
-                    <span
-                      className="text-xs opacity-70"
-                      style={{ fontFamily: "Inter" }}
-                    >
+                    <span className="text-xs opacity-70" style={{ fontFamily: "Inter" }}>
                       {m.release_date?.slice(0, 4) || "—"}
                     </span>
                     <span className="flex items-center gap-1 text-xs font-medium">

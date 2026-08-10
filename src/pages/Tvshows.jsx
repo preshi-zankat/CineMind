@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Star, Play, Tv, X } from "lucide-react";
+import { Star, Play, SlidersHorizontal, X } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import {
   getTrendingTV,
@@ -42,6 +42,7 @@ export default function TVShows() {
   const [genres, setGenres] = useState([]);
   const [shows, setShows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
 
   const debounceRef = useRef(null);
 
@@ -112,23 +113,35 @@ export default function TVShows() {
         .tv-card:hover .play-overlay { opacity: 1; }
       `}</style>
 
-      <span
-        className="text-sm font-semibold flex items-center gap-2"
-        style={{ color: "#7C3AED", fontFamily: "Inter" }}
-      >
-        <Tv size={16} />
-        TV SHOWS
-      </span>
-      <h1 className="text-3xl md:text-4xl font-extrabold mt-1" style={{ fontFamily: "Poppins" }}>
+      <h1 className="text-3xl md:text-4xl font-extrabold" style={{ fontFamily: "Poppins" }}>
         {hasActiveFilters ? "Search Results" : "Trending TV Shows"}
       </h1>
+      <p className="mt-2 opacity-70" style={{ fontFamily: "Inter" }}>
+        Search for TV shows by title, genre, language, or rating.
+      </p>
 
       {/* Filter bar */}
       <div
         className="mt-8 rounded-2xl p-5 shadow-lg"
         style={{ background: darkMode ? "#0B1120" : "#F1F5F9" }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="flex items-center justify-between mb-4 md:hidden">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 font-semibold"
+            style={{ color: "#7C3AED", fontFamily: "Inter" }}
+          >
+            <SlidersHorizontal size={18} />
+            Filters
+          </button>
+          {hasActiveFilters && (
+            <button onClick={clearFilters} className="flex items-center gap-1 text-sm opacity-70">
+              <X size={14} /> Clear
+            </button>
+          )}
+        </div>
+
+        <div className={`${showFilters ? "grid" : "hidden"} md:grid grid-cols-1 md:grid-cols-4 gap-4`}>
           <input
             type="text"
             value={title}
@@ -169,7 +182,7 @@ export default function TVShows() {
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="flex items-center gap-1 mt-4 text-sm opacity-70 hover:opacity-100 transition"
+            className="hidden md:flex items-center gap-1 mt-4 text-sm opacity-70 hover:opacity-100 transition"
             style={{ fontFamily: "Inter" }}
           >
             <X size={14} /> Clear all filters
@@ -185,7 +198,7 @@ export default function TVShows() {
           </p>
         ) : shows.length === 0 ? (
           <p className="opacity-60" style={{ fontFamily: "Inter" }}>
-            Koi TV show nahi mila. Filters change karke try kar.
+            No TV shows found. Try changing your filters.
           </p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">

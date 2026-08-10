@@ -39,6 +39,37 @@ export async function searchMovies(query) {
   return res.json();
 }
 
+// Actor/director ka naam se person dhundta hai
+export async function searchPerson(name) {
+  const res = await fetch(
+    `${BASE_URL}/search/person?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(name)}`
+  );
+
+  if (!res.ok) {
+    throw new Error(`TMDB request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// Ek person (actor/director/etc) ki saari movies popularity ke hisaab se
+export async function getMoviesByPerson(personId) {
+  const params = new URLSearchParams({
+    api_key: API_KEY,
+    language: "en-US",
+    sort_by: "popularity.desc",
+    with_cast: personId,
+  });
+
+  const res = await fetch(`${BASE_URL}/discover/movie?${params.toString()}`);
+
+  if (!res.ok) {
+    throw new Error(`TMDB request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
 export async function getTrendingMovies() {
   const res = await fetch(
     `${BASE_URL}/trending/movie/week?api_key=${API_KEY}&language=en-US`

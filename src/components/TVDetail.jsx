@@ -1,13 +1,192 @@
-import { Star, Calendar, Play, ArrowLeft, Tv2 } from "lucide-react";
+import { Star, Calendar, Play, ArrowLeft, Tv2, Heart, Bookmark } from "lucide-react";
 import { getImageUrl } from "../lib/tmdb";
 import { useTheme } from "../context/ThemeContext";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
+import { useAuth } from "../context/AuthContext";
+import { addFavorite, removeFavorite, isFavorite } from "../appwrite/favorites";
+import {
+  addToWatchlist,
+  removeFromWatchlist,
+  isInWatchlist,
+} from "../appwrite/watchlist";
+import {
+  addReview,
+  getContentReviews,
+  updateReview,
+  deleteReview,
+} from "../appwrite/reviews";
+import StarRating from "./StarRating";
 
 export default function TVDetail({ show, onBack }) {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
 
   if (!show) return null;
+
+  const { user } = useAuth();
+
+  const [favorite, setFavorite] = useState(null);
+  const [watchlistItem, setWatchlistItem] = useState(null);
+
+  const [reviews, setReviews] = useState([]);
+  const [myReview, setMyReview] = useState(null);
+  const [ratingInput, setRatingInput] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+
+  useEffect(() => {
+    if (!user || !show) return;
+
+    async function checkFavorite() {
+      const fav = await isFavorite(show.id, user.$id, "tv");
+      setFavorite(fav);
+    }
+
+    async function checkWatchlist() {
+      const item = await isInWatchlist(show.id, user.$id, "tv");
+      setWatchlistItem(item);
+    }
+
+    checkFavorite();
+    checkWatchlist();
+  }, [show, user]);
+
+  useEffect(() => {
+    if (!show) return;
+
+    async function loadReviews() {
+      setLoadingReviews(true);
+      try {
+        const allReviews = await getContentReviews(show.id, "tv");
+        setReviews(allReviews);
+
+        if (user) {
+          const mine = allReviews.find((r) => r.userId === user.$id) || null;
+          setMyReview(mine);
+          if (mine) {
+            setRatingInput(mine.rating);
+            setReviewText(mine.review);
+          } else {
+            setRatingInput(0);
+            setReviewText("");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load reviews:", err);
+      } finally {
+        setLoadingReviews(false);
+      }
+    }
+
+    loadReviews();
+  }, [show, user]);
+
+  const handleFavorite = async () => {
+    if (!user) {
+      toast.error("Please login first");
+      return;
+    }
+
+    try {
+      if (favorite) {
+        await removeFavorite(favorite.$id);
+        setFavorite(null);
+      } else {
+        const newFavorite = await addFavorite(show, user.$id, "tv");
+        setFavorite(newFavorite);
+        toast.success("Show added to favorites.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update favorite status.");
+    }
+  };
+
+  const handleWatchlist = async () => {
+    if (!user) {
+      toast.error("Please login first");
+      return;
+    }
+
+    try {
+      if (watchlistItem) {
+        await removeFromWatchlist(watchlistItem.$id);
+        setWatchlistItem(null);
+        toast.success("Removed from watchlist.");
+      } else {
+        const newItem = await addToWatchlist(show, user.$id, "tv");
+        setWatchlistItem(newItem);
+        toast.success("Show added to watchlist.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update watchlist.");
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user) {
+      toast.error("Please login first");
+      return;
+    }
+    if (ratingInput === 0) {
+      toast.error("Please select a rating.");
+      return;
+    }
+    if (!reviewText.trim()) {
+      toast.error("Please write a review.");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      if (myReview) {
+        const updated = await updateReview(myReview.$id, {
+          rating: ratingInput,
+          reviewText: reviewText.trim(),
+        });
+        setReviews((prev) => prev.map((r) => (r.$id === updated.$id ? updated : r)));
+        setMyReview(updated);
+        toast.success("Review updated.");
+      } else {
+        const newReview = await addReview({
+          contentId: show.id,
+          contentType: "tv",
+          userId: user.$id,
+          userName: user.name,
+          rating: ratingInput,
+          reviewText: reviewText.trim(),
+        });
+        setReviews((prev) => [newReview, ...prev]);
+        setMyReview(newReview);
+        toast.success("Review submitted.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error submitting review.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!myReview) return;
+    try {
+      await deleteReview(myReview.$id);
+      setReviews((prev) => prev.filter((r) => r.$id !== myReview.$id));
+      setMyReview(null);
+      setRatingInput(0);
+      setReviewText("");
+      toast.success("Review deleted.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Error deleting review.");
+    }
+  };
 
   const trailer = show.videos?.results?.find(
     (v) => v.type === "Trailer" && v.site === "YouTube"
@@ -25,6 +204,11 @@ export default function TVDetail({ show, onBack }) {
   const uniqueProviders = Array.from(
     new Map(allProviders.map((p) => [p.provider_id, p])).values()
   );
+
+  const avgUserRating =
+    reviews.length > 0
+      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+      : null;
 
   return (
     <div>
@@ -137,19 +321,168 @@ export default function TVDetail({ show, onBack }) {
             </div>
           )}
 
-          {trailer && (
-            <a
-              href={`https://www.youtube.com/watch?v=${trailer.key}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-7 inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold"
-              style={{ background: "#7C3AED", color: "white" }}
+          <div className="mt-7 flex flex-wrap gap-4">
+            {trailer && (
+              <a
+                href={`https://www.youtube.com/watch?v=${trailer.key}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold"
+                style={{ background: "#7C3AED", color: "white" }}
+              >
+                <Play size={18} fill="white" />
+                Watch Trailer
+              </a>
+            )}
+
+            <button
+              onClick={handleFavorite}
+              className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold border transition-all duration-200 hover:scale-105"
+              style={{
+                background: darkMode ? "#1F2937" : "#FFFFFF",
+                color: darkMode ? "#FFFFFF" : "#111827",
+                border: "1px solid #D1D5DB",
+              }}
             >
-              <Play size={18} fill="white" />
-              Watch Trailer
-            </a>
+              <Heart
+                size={18}
+                fill={favorite ? "#EF4444" : "none"}
+                color={favorite ? "#EF4444" : darkMode ? "#FFFFFF" : "#111827"}
+              />
+              {favorite ? "Unfavorite" : "Favorite"}
+            </button>
+
+            <button
+              onClick={handleWatchlist}
+              className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold border transition-all duration-200 hover:scale-105"
+              style={{
+                background: watchlistItem ? "#7C3AED20" : darkMode ? "#1F2937" : "#FFFFFF",
+                color: watchlistItem ? "#7C3AED" : darkMode ? "#FFFFFF" : "#111827",
+                border: watchlistItem ? "1px solid #7C3AED" : "1px solid #D1D5DB",
+              }}
+            >
+              <Bookmark
+                size={18}
+                fill={watchlistItem ? "#7C3AED" : "none"}
+                color={watchlistItem ? "#7C3AED" : darkMode ? "#FFFFFF" : "#111827"}
+              />
+              {watchlistItem ? "In Watchlist" : "Add to Watchlist"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Reviews & Ratings */}
+      <div className="max-w-7xl mx-auto px-8 mt-16">
+        <div className="flex items-center gap-3 mb-6">
+          <h2 className="text-2xl font-bold" style={{ fontFamily: "Poppins" }}>
+            Ratings & Reviews
+          </h2>
+          {avgUserRating && (
+            <span
+              className="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold"
+              style={{ background: "#F59E0B20", color: "#F59E0B" }}
+            >
+              <Star size={14} fill="#F59E0B" color="#F59E0B" />
+              {avgUserRating} ({reviews.length} review{reviews.length > 1 ? "s" : ""})
+            </span>
           )}
         </div>
+
+        {user ? (
+          <div
+            className="rounded-2xl p-5 mb-8"
+            style={{ background: darkMode ? "#0B1120" : "#F1F5F9" }}
+          >
+            <p className="text-sm font-semibold mb-2 opacity-70" style={{ fontFamily: "Inter" }}>
+              {myReview ? "Edit your review" : "Rate and review this show"}
+            </p>
+            <StarRating value={ratingInput} onChange={setRatingInput} size={26} />
+
+            <textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Show ke baare mein kya socha?"
+              rows={3}
+              className={`mt-4 w-full px-4 py-3 rounded-xl outline-none resize-none ${
+                darkMode ? "text-white placeholder:text-gray-400" : "text-gray-900 placeholder:text-gray-500"
+              }`}
+              style={{ background: darkMode ? "#111827" : "#ffffff", fontFamily: "Inter" }}
+            />
+
+            <div className="flex gap-3 mt-3">
+              <button
+                onClick={handleSubmitReview}
+                disabled={submittingReview}
+                className="px-6 py-2.5 rounded-full font-semibold transition hover:scale-105 disabled:opacity-60"
+                style={{ background: "#7C3AED", color: "white", fontFamily: "Inter" }}
+              >
+                {submittingReview ? "Saving..." : myReview ? "Update Review" : "Submit Review"}
+              </button>
+              {myReview && (
+                <button
+                  onClick={handleDeleteReview}
+                  className="px-6 py-2.5 rounded-full font-semibold transition hover:scale-105"
+                  style={{
+                    background: darkMode ? "#1F2937" : "#ffffff",
+                    color: "#EF4444",
+                    border: "1px solid #EF444440",
+                    fontFamily: "Inter",
+                  }}
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="mb-8 text-sm opacity-70" style={{ fontFamily: "Inter" }}>
+           Give ratings and reviews.{" "}
+            <Link to="/login" className="underline">Login</Link>
+          </p>
+        )}
+
+        {loadingReviews ? (
+          <p className="opacity-60 text-sm" style={{ fontFamily: "Inter" }}>
+            Loading reviews...
+          </p>
+        ) : reviews.length === 0 ? (
+          <p className="opacity-60 text-sm" style={{ fontFamily: "Inter" }}>
+            no reviews yet. Be the first to review this show!
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {reviews.map((r) => (
+              <div
+                key={r.$id}
+                className="rounded-2xl p-5"
+                style={{ background: darkMode ? "#111827" : "#ffffff" }}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold" style={{ fontFamily: "Poppins" }}>
+                    {r.userName || "CineMind User"}
+                    {user && r.userId === user.$id && (
+                      <span className="ml-1.5 text-xs font-normal opacity-60">(You)</span>
+                    )}
+                  </p>
+                  <StarRating value={r.rating} readOnly size={16} />
+                </div>
+                {r.review && (
+                  <p className="mt-2 text-sm opacity-85 leading-relaxed" style={{ fontFamily: "Inter" }}>
+                    {r.review}
+                  </p>
+                )}
+                <p className="mt-2 text-xs opacity-50" style={{ fontFamily: "Inter" }}>
+                  {new Date(r.$createdAt).toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Cast */}
