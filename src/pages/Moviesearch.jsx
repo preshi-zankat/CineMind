@@ -113,7 +113,7 @@ export default function MovieSearch() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <style>{`
         @keyframes cardFadeUp {
           from { opacity: 0; transform: translateY(24px); }

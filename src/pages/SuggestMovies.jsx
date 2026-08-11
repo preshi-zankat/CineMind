@@ -2,15 +2,24 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Star, Play, Send } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
-import { discoverMovies, searchMovies, searchPerson, getMoviesByPerson, getImageUrl } from "../lib/tmdb";
+import {
+  discoverMovies,
+  searchMovies,
+  getMoviesByPerson,
+  discoverTV,
+  searchTV,
+  getTVByPerson,
+  searchPerson,
+  getImageUrl,
+} from "../lib/tmdb";
 import { parsePrompt } from "../lib/promptSuggest";
-import { getAIMovieFilters } from "../lib/groq";
+import { getAIFilters } from "../lib/groq";
 
 const EXAMPLE_PROMPTS = [
   "I want a feel-good comedy",
-  "Best sci-fi movies with high rating",
+  "A good crime drama series",
   "Suggest a romantic Hindi movie",
-  "Scary horror movie for tonight",
+  "Funny sitcom to binge watch",
 ];
 
 export default function SuggestMovies() {
@@ -18,7 +27,8 @@ export default function SuggestMovies() {
   const navigate = useNavigate();
 
   const [prompt, setPrompt] = useState("");
-  const [movies, setMovies] = useState([]);
+  const [results, setResults] = useState([]);
+  const [resultType, setResultType] = useState("movie"); // jo actually detect hua tha last search mein
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [usedAI, setUsedAI] = useState(false);
@@ -32,12 +42,13 @@ export default function SuggestMovies() {
     setSearched(true);
     setUsedAI(false);
 
-    // Pehle Groq se try karo (asli samajhdaari ke saath). Agar wo fail ho jaaye
-    // (key missing, network issue, rate limit) to purane keyword-matching pe fallback.
+    // Pehle Groq se try karo - ye khud decide karta hai movie ya TV show chahiye.
+    // Agar wo fail ho jaaye (key missing, network issue, rate limit) to keyword-matching fallback.
     let filters;
     try {
-      const aiResult = await getAIMovieFilters(finalPrompt);
+      const aiResult = await getAIFilters(finalPrompt);
       filters = {
+        mediaType: aiResult.mediaType === "tv" ? "tv" : "movie",
         genre: aiResult.genreIds?.length > 0 ? aiResult.genreIds.join("|") : null,
         minRating: aiResult.minRating || null,
         language: aiResult.language || null,
@@ -51,39 +62,43 @@ export default function SuggestMovies() {
       filters = parsePrompt(finalPrompt);
     }
 
+    setResultType(filters.mediaType);
+
     try {
-      let results = [];
+      let items = [];
+      const isTV = filters.mediaType === "tv";
 
       if (filters.personName) {
-        // Actor/director ka naam mila hai - pehle person dhundo, phir unki movies
+        // Actor/creator ka naam mila hai - pehle person dhundo, phir unka content
         const personData = await searchPerson(filters.personName);
         const person = personData.results?.[0];
 
         if (person) {
-          const moviesData = await getMoviesByPerson(person.id);
-          results = moviesData.results || [];
+          const data = isTV ? await getTVByPerson(person.id) : await getMoviesByPerson(person.id);
+          items = data.results || [];
         } else {
-          // Person nahi mila - keywords se fallback search
-          const data = await searchMovies(filters.keywords || finalPrompt);
-          results = data.results || [];
+          const data = isTV
+            ? await searchTV(filters.keywords || finalPrompt)
+            : await searchMovies(filters.keywords || finalPrompt);
+          items = data.results || [];
         }
       } else if (filters.matchedAnything) {
-        const data = await discoverMovies({
-          genre: filters.genre,
-          language: filters.language,
-          minRating: filters.minRating,
-        });
-        results = data.results || [];
+        const data = isTV
+          ? await discoverTV({ genre: filters.genre, language: filters.language, minRating: filters.minRating })
+          : await discoverMovies({ genre: filters.genre, language: filters.language, minRating: filters.minRating });
+        items = data.results || [];
       } else {
         // Kuch match nahi hua - keywords (Groq se) ya poora prompt search query ki tarah try karo
-        const data = await searchMovies(filters.keywords || finalPrompt);
-        results = data.results || [];
+        const data = isTV
+          ? await searchTV(filters.keywords || finalPrompt)
+          : await searchMovies(filters.keywords || finalPrompt);
+        items = data.results || [];
       }
 
-      setMovies(results.slice(0, 10));
+      setResults(items.slice(0, 10));
     } catch (err) {
       console.error("Suggestion fetch failed:", err);
-      setMovies([]);
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -106,14 +121,14 @@ export default function SuggestMovies() {
         style={{ background: "#7C3AED20", color: "#7C3AED" }}
       >
         <Sparkles size={16} />
-        Movie Suggestions
+        AI Suggestions
       </span>
 
       <h1 className="mt-6 text-3xl md:text-4xl font-extrabold" style={{ fontFamily: "Poppins" }}>
         Tell us your mood
       </h1>
       <p className="mt-3 opacity-70" style={{ fontFamily: "Inter" }}>
-        Describe your mood, genre, or taste, and we'll suggest movies for you
+        Describe your mood, genre, or taste — movie or TV show, we'll figure out what you mean
       </p>
 
       {/* Prompt input */}
@@ -131,7 +146,7 @@ export default function SuggestMovies() {
                 handleSuggest();
               }
             }}
-            placeholder="e.g. I want a good feel-good comedy..."
+            placeholder="e.g. I want a good feel-good comedy, or a crime drama series..."
             rows={2}
             className={`flex-1 bg-transparent px-4 py-2 outline-none resize-none ${
               darkMode ? "text-white placeholder:text-gray-400" : "text-gray-900 placeholder:text-gray-500"
@@ -170,29 +185,30 @@ export default function SuggestMovies() {
 
       {/* Results */}
       <div className="mt-10 text-left">
-        {!loading && movies.length > 0 && usedAI && (
+        {!loading && results.length > 0 && (
           <p
             className="text-center text-xs opacity-50 mb-4 flex items-center justify-center gap-1"
             style={{ fontFamily: "Inter" }}
           >
-            <Sparkles size={12} />
-            Suggestions powered by Groq AI
+            {usedAI && <Sparkles size={12} />}
+            Showing {resultType === "tv" ? "TV show" : "movie"} results
+            {usedAI ? " — powered by Groq AI" : ""}
           </p>
         )}
         {loading ? (
           <p className="text-center opacity-60" style={{ fontFamily: "Inter" }}>
-            Finding movies for you...
+            Finding suggestions for you...
           </p>
-        ) : searched && movies.length === 0 ? (
+        ) : searched && results.length === 0 ? (
           <p className="text-center opacity-60" style={{ fontFamily: "Inter" }}>
             No results found. Try describing it a bit differently.
           </p>
-        ) : movies.length > 0 ? (
+        ) : results.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
-            {movies.map((movie, index) => (
+            {results.map((item, index) => (
               <button
-                key={movie.id}
-                onClick={() => navigate(`/movie/${movie.id}`)}
+                key={item.id}
+                onClick={() => navigate(`${resultType === "tv" ? "/tv" : "/movie"}/${item.id}`)}
                 className="suggest-card text-left rounded-2xl overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-2 focus:outline-none focus:ring-2"
                 style={{
                   background: darkMode ? "#111827" : "#ffffff",
@@ -202,8 +218,8 @@ export default function SuggestMovies() {
               >
                 <div className="relative overflow-hidden aspect-[2/3]">
                   <img
-                    src={getImageUrl(movie.poster_path, "w342")}
-                    alt={movie.title}
+                    src={getImageUrl(item.poster_path, "w342")}
+                    alt={item.title || item.name}
                     className="poster-img w-full h-full object-cover transition-transform duration-500"
                   />
                   <div
@@ -217,15 +233,15 @@ export default function SuggestMovies() {
                 </div>
                 <div className="p-3">
                   <h3 className="font-semibold text-sm truncate" style={{ fontFamily: "Poppins" }}>
-                    {movie.title}
+                    {item.title || item.name}
                   </h3>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-xs opacity-70" style={{ fontFamily: "Inter" }}>
-                      {movie.release_date?.slice(0, 4) || "—"}
+                      {(item.release_date || item.first_air_date)?.slice(0, 4) || "—"}
                     </span>
                     <span className="flex items-center gap-1 text-xs font-medium">
                       <Star size={12} fill="#F59E0B" color="#F59E0B" />
-                      {movie.vote_average?.toFixed(1)}
+                      {item.vote_average?.toFixed(1)}
                     </span>
                   </div>
                 </div>

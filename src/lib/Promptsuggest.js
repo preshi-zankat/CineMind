@@ -1,8 +1,6 @@
-// Prompt se movie-relevant filters nikaalta hai (genre, rating, language).
-// Ye asli AI/LLM nahi hai - keyword matching hai, isliye simple aur
-// pura client-side chalta hai bina kisi API key ke.
 
-const GENRE_KEYWORDS = {
+
+const MOVIE_GENRE_KEYWORDS = {
   28: ["action", "fight", "war movie", "explosion"],
   35: ["comedy", "funny", "hasee", "hasi", "laugh", "hilarious"],
   27: ["horror", "dar", "scary", "ghost", "bhoot", "spooky"],
@@ -18,6 +16,20 @@ const GENRE_KEYWORDS = {
   12: ["adventure", "journey", "expedition"],
   99: ["documentary", "real story", "true story"],
   10402: ["music", "musical"],
+};
+
+// TV genre IDs TMDB mein movies se alag hote hai
+const TV_GENRE_KEYWORDS = {
+  10759: ["action", "adventure", "fight", "journey"],
+  35: ["comedy", "funny", "hasee", "hasi", "laugh", "hilarious"],
+  10765: ["sci-fi", "scifi", "science fiction", "fantasy", "magic", "space", "alien"],
+  18: ["drama", "emotional", "sad", "touching"],
+  16: ["animation", "cartoon", "anime"],
+  10751: ["family", "kids", "bachon", "children"],
+  9648: ["mystery", "detective", "whodunit", "suspense", "thriller"],
+  80: ["crime", "gangster", "heist", "mafia"],
+  99: ["documentary", "real story", "true story"],
+  10768: ["war", "politics", "political"],
 };
 
 const RATING_KEYWORDS = [
@@ -37,10 +49,23 @@ const LANGUAGE_KEYWORDS = {
   ta: ["tamil"],
 };
 
+const TV_INDICATOR_WORDS = [
+  "series", "show", "shows", "season", "episode", "web series", "webseries",
+  "sitcom", "binge", "tv show", "drama series",
+];
+
+// mediaType khud detect karta hai prompt se - "series"/"show" jaise words se
+function detectMediaType(text) {
+  return TV_INDICATOR_WORDS.some((w) => text.includes(w)) ? "tv" : "movie";
+}
+
+// mediaType pass mat kar - ye khud detect karta hai prompt se
 export function parsePrompt(prompt) {
   const text = prompt.toLowerCase();
+  const mediaType = detectMediaType(text);
+  const genreKeywords = mediaType === "tv" ? TV_GENRE_KEYWORDS : MOVIE_GENRE_KEYWORDS;
 
-  const matchedGenres = Object.entries(GENRE_KEYWORDS)
+  const matchedGenres = Object.entries(genreKeywords)
     .filter(([, keywords]) => keywords.some((kw) => text.includes(kw)))
     .map(([id]) => id);
 
@@ -61,6 +86,7 @@ export function parsePrompt(prompt) {
   }
 
   return {
+    mediaType,
     genre: matchedGenres.length > 0 ? matchedGenres.join("|") : null, // OR match
     minRating,
     language,

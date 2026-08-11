@@ -47,11 +47,11 @@ export default function Login() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-6 transition-all duration-300"
+      className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-10 transition-all duration-300"
       style={{ background: bg, color }}
     >
       <div
-        className="w-full max-w-md rounded-3xl shadow-2xl p-10"
+        className="w-full max-w-md rounded-3xl shadow-2xl p-6 sm:p-10"
         style={{ background: darkMode ? "#0B1120" : "#F1F5F9" }}
       >
         {/* Logo */}

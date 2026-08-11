@@ -1,8 +1,4 @@
-// src/lib/tmdb.js
-// Yaha apni TMDB API key .env (project root) mein daal:
-// VITE_TMDB_API_KEY=your_key_here
-// Key free milti hai: https://www.themoviedb.org/settings/api
-// Note: Vite mein sirf VITE_ prefix wale env vars client code mein expose hote hai
+
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
 const BASE_URL = "https://api.themoviedb.org/3";
@@ -225,6 +221,24 @@ export async function discoverTV({ genre, language, minRating, page = 1 } = {}) 
   if (genre) params.set("with_genres", genre);
   if (language) params.set("with_original_language", language);
   if (minRating) params.set("vote_average.gte", String(minRating));
+
+  const res = await fetch(`${BASE_URL}/discover/tv?${params.toString()}`);
+
+  if (!res.ok) {
+    throw new Error(`TMDB request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// Ek person (actor/creator) ke TV shows popularity ke hisaab se
+export async function getTVByPerson(personId) {
+  const params = new URLSearchParams({
+    api_key: API_KEY,
+    language: "en-US",
+    sort_by: "popularity.desc",
+    with_cast: personId,
+  });
 
   const res = await fetch(`${BASE_URL}/discover/tv?${params.toString()}`);
 

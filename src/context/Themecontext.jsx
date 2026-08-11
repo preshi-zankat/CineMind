@@ -3,10 +3,24 @@ import { createContext, useContext, useEffect, useState } from "react";
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [darkMode, setDarkMode] = useState(true);
+  // Pehli baar localStorage se saved theme uthao, warna default dark
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem("cinemind-theme");
+      if (saved !== null) return saved === "dark";
+    } catch {
+      // localStorage access fail ho sakta hai (private browsing etc) - default pe chalo
+    }
+    return true;
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
+    try {
+      localStorage.setItem("cinemind-theme", darkMode ? "dark" : "light");
+    } catch {
+      // ignore storage errors
+    }
   }, [darkMode]);
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);

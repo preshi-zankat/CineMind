@@ -2,7 +2,7 @@ import { Star, Clock, Calendar, Play, ArrowLeft, Heart, Bookmark } from "lucide-
 import { getImageUrl } from "../lib/tmdb";
 import { useTheme } from "../context/ThemeContext";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate ,Link} from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { useAuth } from "../context/AuthContext";
@@ -250,7 +250,7 @@ export default function MovieDetail({ movie, onBack }) {
 
         <button
           onClick={onBack}
-          className="absolute top-6 left-8 flex items-center gap-2 px-4 py-2 rounded-full font-medium backdrop-blur-md transition hover:scale-105"
+          className="absolute top-4 left-4 sm:top-6 sm:left-8 flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full font-medium backdrop-blur-md transition hover:scale-105"
           style={{ background: "#00000066", color: "white" }}
         >
           <ArrowLeft size={18} />
@@ -259,7 +259,7 @@ export default function MovieDetail({ movie, onBack }) {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-8 -mt-40 relative flex flex-col md:flex-row items-start gap-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 sm:-mt-28 md:-mt-40 relative flex flex-col items-center md:items-start text-center md:text-left md:flex-row gap-10">
         {/* Poster */}
         <img
           src={getImageUrl(movie.poster_path, "w500")}
@@ -286,7 +286,7 @@ export default function MovieDetail({ movie, onBack }) {
 
           {/* Meta row */}
           <div
-            className="mt-5 flex flex-wrap items-center gap-5 text-sm opacity-90"
+            className="mt-5 flex flex-wrap justify-center md:justify-start items-center gap-5 text-sm opacity-90"
             style={{ fontFamily: "Inter" }}
           >
             <span className="flex items-center gap-1 font-semibold">
@@ -306,7 +306,7 @@ export default function MovieDetail({ movie, onBack }) {
           </div>
 
           {/* Genres */}
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap justify-center md:justify-start gap-2">
             {movie.genres?.map((g) => (
               <span
                 key={g.id}
@@ -349,7 +349,7 @@ export default function MovieDetail({ movie, onBack }) {
 
           {/* Overview */}
           <p
-            className="mt-6 max-w-2xl leading-relaxed opacity-85"
+            className="mt-6 max-w-2xl mx-auto md:mx-0 leading-relaxed opacity-85"
             style={{ fontFamily: "Inter" }}
           >
             {movie.overview}
@@ -364,7 +364,7 @@ export default function MovieDetail({ movie, onBack }) {
               >
                 Available on:
               </p>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap justify-center md:justify-start items-center gap-3">
                 {uniqueProviders.map((p) => (
                   <div
                     key={p.provider_id}
@@ -394,7 +394,7 @@ export default function MovieDetail({ movie, onBack }) {
           )}
 
           {/* Trailer button */}
-          <div className="mt-7 flex flex-wrap gap-4">
+          <div className="mt-7 flex flex-wrap justify-center md:justify-start gap-4">
             {trailer && (
               <a
                 href={`https://www.youtube.com/watch?v=${trailer.key}`}
@@ -454,7 +454,7 @@ export default function MovieDetail({ movie, onBack }) {
       </div>
 
       {/* Reviews & Ratings */}
-      <div className="max-w-7xl mx-auto px-8 mt-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
         <div className="flex items-center gap-3 mb-6">
           <h2 className="text-2xl font-bold" style={{ fontFamily: "Poppins" }}>
             Ratings & Reviews
@@ -578,7 +578,7 @@ export default function MovieDetail({ movie, onBack }) {
 
       {/* Cast */}
       {cast.length > 0 && (
-        <div className="max-w-7xl mx-auto px-8 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
           <h2
             className="text-2xl font-bold mb-6"
             style={{ fontFamily: "Poppins" }}
@@ -606,7 +606,7 @@ export default function MovieDetail({ movie, onBack }) {
       )}
       {/* Similar Movies */}
       {similarMovies.length > 0 && (
-        <div className="max-w-7xl mx-auto px-8 mt-16 mb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 mb-16">
           <style>{`
             @keyframes cardFadeUp {
               from { opacity: 0; transform: translateY(24px); }

@@ -1,5 +1,6 @@
 import { Star, Play } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getTrendingMovies, getImageUrl } from "../lib/tmdb";
 import { useTheme } from "../context/ThemeContext";
 
@@ -32,7 +33,7 @@ export default function TrendingMovies({ onSelect }) {
 
   if (loading) {
     return (
-      <section className="max-w-7xl mx-auto px-8 mt-24">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
         <p className="opacity-60" style={{ fontFamily: "Inter" }}>
           Loading trending movies...
         </p>
@@ -41,7 +42,7 @@ export default function TrendingMovies({ onSelect }) {
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-8 mt-24">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 sm:mt-24">
       <style>{`
         @keyframes cardFadeUp {
           from { opacity: 0; transform: translateY(24px); }
@@ -58,31 +59,31 @@ export default function TrendingMovies({ onSelect }) {
         }
       `}</style>
 
-      <div className="flex items-end justify-between mb-8">
+      <div className="flex items-center justify-between gap-3 mb-5 sm:mb-8">
         <div>
           <span
-            className="text-sm font-semibold"
+            className="text-xs sm:text-sm font-semibold"
             style={{ color: "#7C3AED", fontFamily: "Inter" }}
           >
             THIS WEEK
           </span>
           <h2
-            className="text-3xl md:text-4xl font-extrabold mt-1"
+            className="text-2xl sm:text-3xl md:text-4xl font-extrabold mt-1"
             style={{ fontFamily: "Poppins" }}
           >
             Trending Movies
           </h2>
         </div>
-        <a
-          href="/trending"
-          className="font-semibold hover:opacity-70 transition"
+        <Link
+          to="/trending"
+          className="font-semibold hover:opacity-70 transition text-sm sm:text-base shrink-0"
           style={{ color: "#7C3AED", fontFamily: "Inter" }}
         >
           View all
-        </a>
+        </Link>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
         {trendingMovies.map((movie, index) => (
           <button
             key={movie.id}

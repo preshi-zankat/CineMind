@@ -85,9 +85,9 @@ export default function Home () {
      
 
       {/* Hero */}
-      <section className="max-w-7xl mx-auto px-8 pt-18 text-center">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-18 text-center">
         <span
-          className="px-5 py-2 rounded-full font-semibold"
+          className="px-4 py-1.5 sm:px-5 sm:py-2 rounded-full font-semibold text-xs sm:text-base"
           style={{
             background: "#7C3AED20",
             color: "#7C3AED",
@@ -97,7 +97,7 @@ export default function Home () {
         </span>
 
         <h1
-          className="mt-8 text-5xl md:text-6xl font-extrabold leading-tight"
+          className="mt-6 sm:mt-8 text-3xl sm:text-5xl md:text-6xl font-extrabold leading-tight"
           style={{ fontFamily: "Poppins" }}
         >
           Discover Your
@@ -106,7 +106,7 @@ export default function Home () {
         </h1>
 
         <p
-          className="mt-6 max-w-2xl mx-auto text-lg opacity-80"
+          className="mt-4 sm:mt-6 max-w-2xl mx-auto text-base sm:text-lg opacity-80"
           style={{ fontFamily: "Inter" }}
         >
           Get personalized movie recommendations based on your mood, favorite
@@ -114,7 +114,7 @@ export default function Home () {
         </p>
 
         {/* Search */}
-        <div className="mt-12 max-w-xl mx-auto relative" ref={searchBoxRef}>
+        <div className="mt-8 sm:mt-12 max-w-xl mx-auto relative" ref={searchBoxRef}>
           <form
             onSubmit={handleSearchSubmit}
             className="rounded-full flex overflow-hidden shadow-xl"
@@ -128,7 +128,7 @@ export default function Home () {
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
               placeholder="Search movies..."
-              className={`flex-1 bg-transparent px-6 py-4 outline-none ${
+              className={`flex-1 bg-transparent px-4 py-3 sm:px-6 sm:py-4 outline-none text-sm sm:text-base min-w-0 ${
                 darkMode
                   ? "text-white placeholder:text-gray-400"
                   : "text-gray-900 placeholder:text-gray-500"
@@ -137,13 +137,13 @@ export default function Home () {
 
             <button
               type="submit"
-              className="px-6"
+              className="px-4 sm:px-6 shrink-0"
               style={{
                 background: "#7C3AED",
                 color: "white",
               }}
             >
-              <Search />
+              <Search size={20} />
             </button>
           </form>
 
@@ -180,9 +180,9 @@ export default function Home () {
         </div>
 
         {/* Buttons */}
-        <div className="mt-10 flex justify-center gap-5">
+        <div className="mt-8 sm:mt-10 flex flex-row flex-wrap justify-center items-center gap-3 sm:gap-5">
           <button
-            className="px-8 py-3 rounded-full font-semibold transition hover:scale-105 pointer-coarse:scale-105"
+            className="px-5 py-2.5 text-sm sm:text-base sm:px-8 sm:py-3 rounded-full font-semibold transition hover:scale-105 pointer-coarse:scale-105"
             onClick={() => navigate("/movies")}
             style={{
               background: "#7C3AED",
@@ -193,7 +193,7 @@ export default function Home () {
           </button>
 
           <button
-            className="px-8 py-3 rounded-full font-semibold transition hover:scale-105 cursor-alias pointer-coarse:scale-105"
+            className="px-5 py-2.5 text-sm sm:text-base sm:px-8 sm:py-3 rounded-full font-semibold transition hover:scale-105 cursor-alias pointer-coarse:scale-105"
             onClick={() => navigate("/trending")}
             style={{
               background: "#F59E0B",

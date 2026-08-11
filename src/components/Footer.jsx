@@ -14,10 +14,10 @@ export default function Footer() {
         background: darkMode ? "#0B1120" : "#F1F5F9",
       }}
     >
-      <div className="max-w-7xl mx-auto px-8 py-12 grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 text-center sm:text-left">
         {/* Brand */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center justify-center sm:justify-start gap-2 mb-3">
             <Film size={20} style={{ color: "#7C3AED" }} />
             <h2
               className="text-xl font-bold"
@@ -54,7 +54,7 @@ export default function Footer() {
         {/* Socials */}
         <div>
           <h3 className="font-semibold mb-3">Follow us</h3>
-          <div className="flex gap-4">
+          <div className="flex justify-center sm:justify-start gap-4">
             <a href="#" className="p-2 rounded-full transition hover:scale-110" style={{ background: darkMode ? "#111827" : "#E5E7EB" }}>
               <FaInstagram size={20} />
             </a>

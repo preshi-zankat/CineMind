@@ -49,12 +49,13 @@ export default function Navbar() {
         color,
       }}
     >
-      <div className="max-w-7xl mx-auto px-8 py-5 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex justify-between items-center">
         {/* Logo */}
-        <NavLink to="/" className="flex items-center gap-2">
-          <Film size={24} style={{ color: "#7C3AED" }} />
+        <NavLink to="/" className="flex items-center gap-2 shrink-0">
+          <Film size={22} className="sm:hidden" style={{ color: "#7C3AED" }} />
+          <Film size={24} className="hidden sm:block" style={{ color: "#7C3AED" }} />
           <h1
-            className="text-2xl font-bold"
+            className="text-xl sm:text-2xl font-bold"
             style={{ color: "#7C3AED", fontFamily: "Poppins, sans-serif" }}
           >
             CineMind
@@ -62,7 +63,7 @@ export default function Navbar() {
         </NavLink>
 
         {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-6 lg:gap-8">
           {links.map((link) => (
             <NavLink
               key={link.to}
@@ -76,18 +77,19 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={toggleDarkMode}
+            title="Toggle theme"
             className="p-2 rounded-full transition hover:scale-110"
             style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
           >
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
+          {/* Profile + Logout - desktop only, collapses into mobile menu below md */}
           {user ? (
-            <div className="flex items-center gap-2">
-              {/* Profile avatar - click karke /profile pe jaata hai */}
+            <div className="hidden md:flex items-center gap-2">
               <NavLink
                 to="/profile"
                 title="My Profile"
@@ -110,7 +112,6 @@ export default function Navbar() {
                 )}
               </NavLink>
 
-              {/* Logout - icon only */}
               <button
                 onClick={handleLogout}
                 title="Logout"
@@ -121,8 +122,8 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            // Logged out -> Login + Signup buttons
-            <div className="hidden sm:flex items-center gap-2">
+            // Logged out -> Login + Signup buttons (desktop only)
+            <div className="hidden md:flex items-center gap-2">
               <NavLink
                 to="/login"
                 className="px-4 py-2 rounded-full text-sm font-semibold transition hover:opacity-70"
@@ -140,7 +141,7 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mobile menu toggle */}
+          {/* Mobile menu toggle - profile, logout, login/signup all collapse in here below md */}
           <button
             className="md:hidden p-2 rounded-full transition hover:scale-110"
             style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
@@ -151,10 +152,10 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile dropdown */}
+      {/* Mobile dropdown - profile, logout, login/signup all live here below md */}
       {mobileOpen && (
         <div
-          className="md:hidden flex flex-col gap-4 px-8 pb-6"
+          className="md:hidden flex flex-col gap-4 px-4 sm:px-6 pb-6 text-base"
           style={{ fontFamily: "Inter, sans-serif" }}
         >
           {links.map((link) => (
@@ -169,34 +170,54 @@ export default function Navbar() {
           ))}
 
           {user && (
-            <NavLink
-              to="/profile"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3"
-              style={linkStyle}
+            <div
+              className="flex items-center justify-between gap-3 pt-3 mt-1"
+              style={{ borderTop: darkMode ? "1px solid #1E293B" : "1px solid #E5E7EB" }}
             >
-              <span
-                className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0"
-                style={{ background: darkMode ? "#111827" : "#E5E7EB" }}
+              <NavLink
+                to="/profile"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 min-w-0"
+                style={linkStyle}
               >
-                {profileImageUrl ? (
-                  <img src={profileImageUrl} alt={user.name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-xs font-bold" style={{ color: "#7C3AED" }}>
-                    {user.name?.[0]?.toUpperCase() || "?"}
-                  </span>
-                )}
-              </span>
-              My Profile
-            </NavLink>
+                <span
+                  className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0"
+                  style={{ background: darkMode ? "#111827" : "#E5E7EB" }}
+                >
+                  {profileImageUrl ? (
+                    <img src={profileImageUrl} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-bold" style={{ color: "#7C3AED" }}>
+                      {user.name?.[0]?.toUpperCase() || "?"}
+                    </span>
+                  )}
+                </span>
+                <span className="truncate">My Profile</span>
+              </NavLink>
+
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  handleLogout();
+                }}
+                title="Logout"
+                className="p-2 rounded-full transition hover:scale-110 shrink-0"
+                style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
           )}
 
           {!user && (
-            <div className="flex items-center gap-3 pt-2">
+            <div
+              className="flex items-center gap-3 pt-3 mt-1"
+              style={{ borderTop: darkMode ? "1px solid #1E293B" : "1px solid #E5E7EB" }}
+            >
               <NavLink
                 to="/login"
                 onClick={() => setMobileOpen(false)}
-                className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold"
+                className="flex-1 text-center px-4 py-2.5 rounded-full text-sm font-semibold"
                 style={{ background: darkMode ? "#111827" : "#E5E7EB", color }}
               >
                 Log In
@@ -204,7 +225,7 @@ export default function Navbar() {
               <NavLink
                 to="/signup"
                 onClick={() => setMobileOpen(false)}
-                className="flex-1 text-center px-4 py-2 rounded-full text-sm font-semibold"
+                className="flex-1 text-center px-4 py-2.5 rounded-full text-sm font-semibold"
                 style={{ background: "#7C3AED", color: "white" }}
               >
                 Sign Up

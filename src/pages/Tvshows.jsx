@@ -102,7 +102,7 @@ export default function TVShows() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <style>{`
         @keyframes cardFadeUp {
           from { opacity: 0; transform: translateY(24px); }
@@ -114,7 +114,7 @@ export default function TVShows() {
       `}</style>
 
       <h1 className="text-3xl md:text-4xl font-extrabold" style={{ fontFamily: "Poppins" }}>
-        {hasActiveFilters ? "Search Results" : "Trending TV Shows"}
+        {hasActiveFilters ? "Search Results" : "Search TV Shows"}
       </h1>
       <p className="mt-2 opacity-70" style={{ fontFamily: "Inter" }}>
         Search for TV shows by title, genre, language, or rating.
