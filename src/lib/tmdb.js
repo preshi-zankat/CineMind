@@ -44,7 +44,6 @@ export async function searchPerson(name) {
   if (!res.ok) {
     throw new Error(`TMDB request failed: ${res.status}`);
   }
-
   return res.json();
 }
 

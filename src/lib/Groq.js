@@ -1,5 +1,4 @@
 
-
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
@@ -40,7 +39,7 @@ Respond ONLY with valid JSON in exactly this shape, no markdown, no code fences,
 
 export async function getAIFilters(prompt) {
   if (!GROQ_API_KEY) {
-    throw new Error("VITE_GROQ_API_KEY .env mein set nahi hai.");
+    throw new Error("GROQ_API_KEY is not set. Please set the VITE_GROQ_API_KEY environment variable.");
   }
 
   const res = await fetch(GROQ_URL, {
@@ -68,7 +67,7 @@ export async function getAIFilters(prompt) {
   const data = await res.json();
   const text = data.choices?.[0]?.message?.content;
   if (!text) {
-    throw new Error("Groq se khaali response mila.");
+    throw new Error("No response from Groq.");
   }
 
   return JSON.parse(text);
