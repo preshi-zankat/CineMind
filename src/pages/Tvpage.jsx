@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import TVDetail from "../components/TVDetail";
 import { getTVDetails } from "../lib/tmdb";
 
+
 export default function TVPage() {
   const { id } = useParams();
   const navigate = useNavigate();

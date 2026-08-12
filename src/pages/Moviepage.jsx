@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import MovieDetail from "../components/MovieDetail";
+import MovieDetail from "../components/Moviedetail";
 import { getMovieDetails } from "../lib/tmdb";
 import toast from "react-hot-toast";
 

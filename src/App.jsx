@@ -14,11 +14,13 @@ import WatchList from "./pages/Watchlist";
 import Profile from "./pages/Profile";
 import TVShows from "./pages/Tvshows";
 
+
 import TVPage from "./pages/Tvpage";
 
-
 import SuggestMovies from "./pages/SuggestMovies";
+
 import ProtectedRoute from "./routes/ProtectedRoute";
+
 import PublicRoute from "./routes/PublicRoute";
 
 // Navbar/Footer yaha se global mil rahe hai, isliye ye ThemeProvider ke andar

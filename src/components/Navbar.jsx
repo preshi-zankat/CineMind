@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { logout } from "../appwrite/auth";
-import { getProfileImageUrl } from "../appwrite/storage";
+import { getProfileImageUrl } from "../appwrite/Storage";
 import toast from "react-hot-toast";
 
 export default function Navbar() {
