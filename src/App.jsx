@@ -13,8 +13,6 @@ import Trending from "./pages/Trending";
 import WatchList from "./pages/Watchlist";
 import Profile from "./pages/Profile";
 import TVShows from "./pages/Tvshows";
-
-
 import TVPage from "./pages/Tvpage";
 
 import SuggestMovies from "./pages/SuggestMovies";
