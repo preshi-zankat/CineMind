@@ -7,10 +7,10 @@ import { useTheme } from "../context/ThemeContext";
 import { getImageUrl, getMovieDetails, getTVDetails } from "../lib/tmdb";
 import { getFavorites } from "../appwrite/favorites";
 import { getWatchlist } from "../appwrite/watchlist";
-import { getUserReviews } from "../appwrite/reviews";
-import StarRating from "../components/StarRating";
-import { updateUserName, updateUserPrefs } from "../appwrite/profile";
-import { uploadProfileImage, getProfileImageUrl, deleteProfileImage } from "../appwrite/storage";
+import { getUserReviews } from "../appwrite/Reviews";
+import StarRating from "../components/Starrating";
+import { updateUserName, updateUserPrefs } from "../appwrite/Profile";
+import { uploadProfileImage, getProfileImageUrl, deleteProfileImage } from "../appwrite/Storage";
 
 export default function Profile() {
   const { user, checkUser } = useAuth();

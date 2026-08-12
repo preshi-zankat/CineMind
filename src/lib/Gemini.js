@@ -1,7 +1,4 @@
-// Gemini API se prompt ko structured movie-search filters mein convert karta hai.
-// NOTE: Ye call browser se seedha hoti hai, isliye API key bundled JS mein visible
-// rehti hai. Personal/portfolio project ke liye theek hai, production app ke liye
-// isse backend/serverless function ke peeche rakhna chahiye.
+
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;

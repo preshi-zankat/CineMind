@@ -12,8 +12,8 @@ import {
   searchPerson,
   getImageUrl,
 } from "../lib/tmdb";
-import { parsePrompt } from "../lib/promptSuggest";
-import { getAIFilters } from "../lib/groq";
+import { parsePrompt } from "../lib/Promptsuggest";
+import { getAIFilters } from "../lib/Groq";
 
 const EXAMPLE_PROMPTS = [
   "I want a feel-good comedy",
