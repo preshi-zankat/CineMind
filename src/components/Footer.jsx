@@ -72,7 +72,8 @@ export default function Footer() {
         className="text-center text-sm opacity-60 py-6 border-t"
         style={{ borderColor: darkMode ? "#1E293B" : "#E5E7EB", fontFamily: "Inter" }}
       >
-        © {new Date().getFullYear()} CineMind. All rights reserved.
+        © {new Date().getFullYear()} CineMind. All rights reserved. 
+        Data provided by TMDB. <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-80">Learn more</a>
       </div>
     </footer>
   );
