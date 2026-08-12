@@ -17,8 +17,8 @@ import {
   getContentReviews,
   updateReview,
   deleteReview,
-} from "../appwrite/reviews";
-import StarRating from "./StarRating";
+} from "../appwrite/Reviews";
+import StarRating from "./Starrating";
 
 export default function TVDetail({ show, onBack }) {
   const { darkMode } = useTheme();
