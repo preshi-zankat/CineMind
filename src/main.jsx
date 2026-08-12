@@ -4,7 +4,7 @@ import "./index.css";
 import App from "./App.jsx";
 import { Toaster } from "react-hot-toast";
 
-import { ThemeProvider } from "./context/Themecontext";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { AuthProvider } from "./context/AuthContext";
 
 createRoot(document.getElementById("root")).render(
